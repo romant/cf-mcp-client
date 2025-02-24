@@ -1,0 +1,40 @@
+<main xmlns="http://www.w3.org/1999/html">
+  <mat-toolbar>
+    <span>AI Tool Chat</span>
+    <span style="flex:1 1 auto"></span>
+  </mat-toolbar>
+
+  <div class="chatbox" id="chatbox" style="display: flex; flex-direction: column; padding: 15px; width: 90%">
+    <div #chatboxMessages class="chatbox-messages" style="flex-grow: 1">
+      <!-- Chat messages will be dynamically inserted here -->
+      @for (message of messages; track message) {
+        <div class="chat-message {{message.persona}}">
+          <mat-card appearance="outlined"
+                    [style.background-color]="message.persona == 'user' ? 'var(--mat-sys-primary-container)' : 'var(--mat-sys-surface)'">
+            <mat-card-content>
+              @if (message.persona == 'user') {
+                {{ message.text }}
+              } @else {
+                @if ( message.typing) {
+                    <div class="typing__dot"></div><div class="typing__dot"></div><div class="typing__dot"></div>
+                }
+                <markdown [data]="message.text"></markdown>
+              }
+            </mat-card-content>
+          </mat-card>
+        </div>
+      }
+    </div>
+    <div class="chatbox-footer">
+      <ng-form style="display: flex;">
+        <mat-form-field style="flex-grow: 1">
+          <input name="chatbox-input" placeholder="Type a message..." matInput [(ngModel)]="chatMessage" type="text"
+                 (keydown.enter)="sendChatMessage()">
+        </mat-form-field>
+        &nbsp;&nbsp;
+        <button mat-flat-button type="button" (click)="sendChatMessage()" style="margin-top: 5px;">Send</button>
+      </ng-form>
+    </div>
+  </div>
+
+</main>
