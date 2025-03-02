@@ -33,10 +33,9 @@ public class ChatConfiguration {
         return new InMemoryChatMemory();
     }
 
-    @Bean
     public ToolCallbackProvider[] mcpClients() {
         List<ToolCallbackProvider> toolCallbackProviders = new ArrayList<>();
-        List<String> mcpServiceURLs = List.of("https://time-mcp.apps.tas.vmtanzu.com");
+        List<String> mcpServiceURLs = mcpServiceURLs();
 
         for (String mcpServiceURL : mcpServiceURLs) {
             McpSyncClient syncClient = McpClient.sync(new HttpClientSseClientTransport(mcpServiceURL)).build();
@@ -51,7 +50,8 @@ public class ChatConfiguration {
     private static final String USER_PROVIDED_SERVICE = "user-provided";
     private static final String MCP_SERVICE_URL = "mcpServiceURL";
 
-    public List<String> findMcpServiceURLs() {
+    @Bean
+    public List<String> mcpServiceURLs() {
         List<String> mcpServiceURLs = new ArrayList<>();
 
         String vcapServices = System.getenv(VCAP_SERVICES);

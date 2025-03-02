@@ -1,10 +1,12 @@
 ---
 applications:
-  - name: cf-mcp-client
+  - name: ai-tool-chat
     buildpacks:
       - java_buildpack_offline
     memory: 1G
     instances: 1
-    path: target//cf-mcp-client-0.0.1-SNAPSHOT.jar
+    path: target/cf-mcp-client-0.0.1-SNAPSHOT.jar
     env:
       JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 17.+ } }'
+    services:
+      - anthropic-api
