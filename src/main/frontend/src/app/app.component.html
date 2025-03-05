@@ -4,8 +4,8 @@
     <span style="flex:1 1 auto"></span>
   </mat-toolbar>
 
-  <div class="chatbox" id="chatbox" style="display: flex; flex-direction: column; padding: 15px; width: 90%">
-    <div #chatboxMessages class="chatbox-messages" style="flex-grow: 1">
+  <div class="chatbox" id="chatbox">
+    <div #chatboxMessages class="chatbox-messages">
       <!-- Chat messages will be dynamically inserted here -->
       @for (message of messages; track message) {
         <div class="chat-message {{message.persona}}">
@@ -16,7 +16,7 @@
                 {{ message.text }}
               } @else {
                 @if ( message.typing) {
-                    <div class="typing__dot"></div><div class="typing__dot"></div><div class="typing__dot"></div>
+                  <div class="typing__dot"></div><div class="typing__dot"></div><div class="typing__dot"></div>
                 }
                 <markdown [data]="message.text"></markdown>
               }
@@ -36,5 +36,4 @@
       </ng-form>
     </div>
   </div>
-
 </main>
