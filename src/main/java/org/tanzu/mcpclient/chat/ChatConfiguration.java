@@ -19,6 +19,12 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,19 +37,6 @@ public class ChatConfiguration {
     @Bean
     ChatMemory chatMemory() {
         return new InMemoryChatMemory();
-    }
-
-    public ToolCallbackProvider[] mcpClients() {
-        List<ToolCallbackProvider> toolCallbackProviders = new ArrayList<>();
-        List<String> mcpServiceURLs = mcpServiceURLs();
-
-        for (String mcpServiceURL : mcpServiceURLs) {
-            McpSyncClient syncClient = McpClient.sync(new HttpClientSseClientTransport(mcpServiceURL)).build();
-            syncClient.initialize();
-            toolCallbackProviders.add(new SyncMcpToolCallbackProvider(syncClient));
-        }
-
-        return toolCallbackProviders.toArray(new ToolCallbackProvider[0]);
     }
 
     private static final String VCAP_SERVICES = "VCAP_SERVICES";
@@ -75,7 +68,7 @@ public class ChatConfiguration {
                 Map<String, String> map = mapper.convertValue(credentials, Map.class);
                 logger.info("Found credentials:\n" + map);
                 String mcpServiceURL = map.get(MCP_SERVICE_URL);
-                if ( mcpServiceURL != null) {
+                if (mcpServiceURL != null) {
                     mcpServiceURLs.add(mcpServiceURL);
                     logger.info("Bound to MCP Service: " + mcpServiceURL);
                 }
@@ -112,4 +105,38 @@ public class ChatConfiguration {
             }
         };
     }
+
+    @Bean
+    public SSLContext sslContext() throws NoSuchAlgorithmException, KeyManagementException {
+        TrustManager[] trustAllCertificates = new TrustManager[]{
+                new X509TrustManager() {
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return null;
+                    }
+
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                    }
+                }
+        };
+
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, trustAllCertificates, new java.security.SecureRandom());
+        return sslContext;
+    }
+
+//    public ToolCallbackProvider[] mcpClients() {
+//        List<ToolCallbackProvider> toolCallbackProviders = new ArrayList<>();
+//        List<String> mcpServiceURLs = mcpServiceURLs();
+//
+//        for (String mcpServiceURL : mcpServiceURLs) {
+//            McpSyncClient syncClient = McpClient.sync(new HttpClientSseClientTransport(mcpServiceURL)).build();
+//            syncClient.initialize();
+//            toolCallbackProviders.add(new SyncMcpToolCallbackProvider(syncClient));
+//        }
+//
+//        return toolCallbackProviders.toArray(new ToolCallbackProvider[0]);
+//    }
 }
