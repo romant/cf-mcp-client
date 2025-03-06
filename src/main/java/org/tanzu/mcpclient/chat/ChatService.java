@@ -61,7 +61,7 @@ public class ChatService {
                     .toArray(ToolCallbackProvider[]::new);
 
             return chatClient
-                    .prompt(chat)
+                    .prompt().user(chat).system(systemChatPrompt)
                     .tools(toolCallbackProviders)
                     .call()
                     .content();
