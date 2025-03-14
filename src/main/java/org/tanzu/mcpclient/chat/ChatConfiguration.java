@@ -121,17 +121,4 @@ public class ChatConfiguration {
         sslContext.init(null, trustAllCertificates, new java.security.SecureRandom());
         return sslContext;
     }
-
-//    public ToolCallbackProvider[] mcpClients() {
-//        List<ToolCallbackProvider> toolCallbackProviders = new ArrayList<>();
-//        List<String> mcpServiceURLs = mcpServiceURLs();
-//
-//        for (String mcpServiceURL : mcpServiceURLs) {
-//            McpSyncClient syncClient = McpClient.sync(new HttpClientSseClientTransport(mcpServiceURL)).build();
-//            syncClient.initialize();
-//            toolCallbackProviders.add(new SyncMcpToolCallbackProvider(syncClient));
-//        }
-//
-//        return toolCallbackProviders.toArray(new ToolCallbackProvider[0]);
-//    }
 }

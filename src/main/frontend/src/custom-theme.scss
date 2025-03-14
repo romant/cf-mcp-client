@@ -1,4 +1,4 @@
-@use '_theme-colors' as cfpulse-theme;
+@use '_theme-colors' as toolchat-theme;
 
 // Custom Theming for Angular Material
 // For more information: https://material.angular.io/guide/theming
@@ -8,8 +8,8 @@ html {
   @include mat.theme((
     color: (
       theme-type: light,
-      primary: cfpulse-theme.$primary-palette,
-      tertiary: cfpulse-theme.$tertiary-palette,
+      primary: toolchat-theme.$primary-palette,
+      tertiary: toolchat-theme.$tertiary-palette,
     ),
     typography: Roboto,
     density: 0,
