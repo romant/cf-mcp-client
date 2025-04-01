@@ -19,10 +19,11 @@ import {MatCard, MatCardContent} from '@angular/material/card';
 import {MatToolbar} from '@angular/material/toolbar';
 import {MarkdownComponent} from 'ngx-markdown';
 import {MemoryPanelComponent} from '../memory-panel/memory-panel.component';
+import {DocumentPanelComponent} from '../document-panel/document-panel.component';
 
 @Component({
   selector: 'app-root',
-  imports: [MatButton, FormsModule, MatFormField, MatInput, MatCard, MatCardContent, MatToolbar, MarkdownComponent, MatInputModule, MemoryPanelComponent],
+  imports: [MatButton, FormsModule, MatFormField, MatInput, MatCard, MatCardContent, MatToolbar, MarkdownComponent, MatInputModule, MemoryPanelComponent,DocumentPanelComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
