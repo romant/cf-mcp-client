@@ -27,7 +27,7 @@ export class DocumentPanelComponent {
 
   constructor(
     private httpClient: HttpClient,
-    @Inject(DOCUMENT) private document: Document,
+    @Inject(DOCUMENT) private htmlDocument: Document,
     private snackBar: MatSnackBar
   ) {
     this.fetchDocuments();
@@ -53,12 +53,12 @@ export class DocumentPanelComponent {
     let host: string;
     let protocol: string;
 
-    if (this.document.location.hostname == 'localhost') {
+    if (this.htmlDocument.location.hostname == 'localhost') {
       host = 'localhost:8080';
     } else {
-      host = this.document.location.host;
+      host = this.htmlDocument.location.host;
     }
-    protocol = this.document.location.protocol;
+    protocol = this.htmlDocument.location.protocol;
 
     this.httpClient.post<DocumentInfo>(`${protocol}//${host}/upload`, formData, {
       reportProgress: true,
@@ -87,12 +87,12 @@ export class DocumentPanelComponent {
     let host: string;
     let protocol: string;
 
-    if (this.document.location.hostname == 'localhost') {
+    if (this.htmlDocument.location.hostname == 'localhost') {
       host = 'localhost:8080';
     } else {
-      host = this.document.location.host;
+      host = this.htmlDocument.location.host;
     }
-    protocol = this.document.location.protocol;
+    protocol = this.htmlDocument.location.protocol;
 
     this.httpClient.get<DocumentInfo[]>(`${protocol}//${host}/documents`)
       .subscribe({
@@ -109,12 +109,12 @@ export class DocumentPanelComponent {
     let host: string;
     let protocol: string;
 
-    if (this.document.location.hostname == 'localhost') {
+    if (this.htmlDocument.location.hostname == 'localhost') {
       host = 'localhost:8080';
     } else {
-      host = this.document.location.host;
+      host = this.htmlDocument.location.host;
     }
-    protocol = this.document.location.protocol;
+    protocol = this.htmlDocument.location.protocol;
 
     this.httpClient.delete(`${protocol}//${host}/documents/${id}`)
       .subscribe({

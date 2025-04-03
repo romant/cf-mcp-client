@@ -39,6 +39,7 @@ public class DocumentController {
                 Instant.now().toString()
         );
 
+        documentList.clear();
         documentList.add(documentInfo);
 
         return ResponseEntity.ok(documentInfo);
