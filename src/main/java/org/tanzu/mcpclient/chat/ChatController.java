@@ -4,6 +4,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Optional;
+
 @RestController
 public class ChatController {
 
@@ -14,11 +16,11 @@ public class ChatController {
     }
 
     @GetMapping("/chat")
-    public CfChatResponse chat(@RequestParam("chat") String chat) {
-        String response = chatService.chat(chat);
+    public CfChatResponse chat(@RequestParam("chat") String chat, @RequestParam(value = "documentId", required = false) Optional<String> documentId) {
+        String response = chatService.chat(chat, documentId);
         return new CfChatResponse(response);
     }
 
-    record CfChatResponse(String message) {
+    public record CfChatResponse(String message) {
     }
 }

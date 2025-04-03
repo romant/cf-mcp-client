@@ -6,13 +6,18 @@ import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
+import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.mcp.SyncMcpToolCallbackProvider;
 import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.tanzu.mcpclient.document.DocumentService;
 import org.tanzu.mcpclient.memgpt.MemGPTChatMemory;
 import org.tanzu.mcpclient.memgpt.MemGPTMessageChatMemoryAdvisor;
 
@@ -20,6 +25,7 @@ import javax.net.ssl.SSLContext;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
@@ -30,6 +36,7 @@ public class ChatService {
     public static final String CONVERSATION_NAME = "CF Conversation";
 
     private final ChatClient chatClient;
+    private final VectorStore vectorStore;
     private final List<String> mcpServiceURLs;
     private final SSLContext sslContext;
 
@@ -37,7 +44,7 @@ public class ChatService {
     private Resource systemChatPrompt;
 
     public ChatService(ChatClient.Builder chatClientBuilder, ChatMemory chatMemory, List<String> mcpServiceURLs,
-                       SSLContext sslContext) {
+                       VectorStore vectorStore, SSLContext sslContext) {
 
         ChatClient.Builder builder;
         if (chatMemory instanceof MemGPTChatMemory memGPTChatMemory) {
@@ -50,10 +57,11 @@ public class ChatService {
         }
         this.chatClient = builder.build();
         this.mcpServiceURLs = mcpServiceURLs;
+        this.vectorStore = vectorStore;
         this.sslContext = sslContext;
     }
 
-    public String chat(String chat) {
+    public String chat(String chat, Optional<String> documentId) {
         HttpClient.Builder clientBuilder = HttpClient.newBuilder()
                 .sslContext(sslContext)
                 .connectTimeout(Duration.ofSeconds(30));
@@ -71,9 +79,19 @@ public class ChatService {
                     .map(SyncMcpToolCallbackProvider::new)
                     .toArray(ToolCallbackProvider[]::new);
 
-            return chatClient
+            ChatClient.ChatClientRequestSpec spec = chatClient
                     .prompt().user(chat).system(systemChatPrompt)
-                    .tools(toolCallbackProviders)
+                    .tools(toolCallbackProviders);
+            if (documentId.isPresent()) {
+                Advisor questionAnswerAdvisor = new QuestionAnswerAdvisor(this.vectorStore,
+                        SearchRequest.builder().build());
+                String filterExpression = DocumentService.DOCUMENT_ID + " == '" + documentId.get() + "'";
+
+                spec = spec.advisors(questionAnswerAdvisor).
+                        advisors(advisorSpec -> advisorSpec.param(QuestionAnswerAdvisor.FILTER_EXPRESSION, filterExpression));
+            }
+
+            return spec
                     .call()
                     .content();
         }
