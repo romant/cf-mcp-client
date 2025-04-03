@@ -14,10 +14,17 @@
     </div>
 
     <div class="upload-container">
-      <button mat-raised-button color="primary" (click)="fileInput.click()">
+      <button mat-raised-button color="primary" (click)="fileInput.click()" [disabled]="isUploading">
         <mat-icon>upload</mat-icon> Upload File
       </button>
       <input hidden (change)="onFileSelected($event)" #fileInput type="file" accept=".pdf,application/pdf">
+
+      <!-- Upload progress indicator -->
+      <div *ngIf="isUploading" class="upload-progress-container">
+        <div class="file-name">Uploading: {{ currentFileName }}</div>
+        <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
+        <div class="progress-percentage">{{ uploadProgress }}%</div>
+      </div>
     </div>
 
     <div class="documents-list">
@@ -32,9 +39,9 @@
           <mat-icon matListItemIcon>insert_drive_file</mat-icon>
           <div matListItemTitle>{{ doc.name }}</div>
           <div matListItemLine>{{ doc.size | fileSize }}</div>
-<!--          <button mat-icon-button (click)="deleteDocument(doc.id)">-->
-<!--            <mat-icon>delete</mat-icon>-->
-<!--          </button>-->
+          <!--          <button mat-icon-button (click)="deleteDocument(doc.id)">-->
+          <!--            <mat-icon>delete</mat-icon>-->
+          <!--          </button>-->
         </mat-list-item>
       </mat-list>
     </div>

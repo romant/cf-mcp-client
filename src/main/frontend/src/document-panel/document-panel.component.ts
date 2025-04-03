@@ -8,13 +8,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FileSizePipe } from '../pipes/file-size.pipe';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
   selector: 'app-document-panel',
   standalone: true,
   imports: [
     CommonModule, MatSidenavModule, MatButtonModule, MatIconModule,
-    MatListModule, MatSnackBarModule, FileSizePipe
+    MatListModule, MatSnackBarModule, FileSizePipe, MatProgressBarModule
   ],
   templateUrl: './document-panel.component.html',
   styleUrl: './document-panel.component.css'
@@ -22,6 +23,11 @@ import { FileSizePipe } from '../pipes/file-size.pipe';
 export class DocumentPanelComponent {
   documents: DocumentInfo[] = [];
   private destroyRef = inject(DestroyRef);
+
+  // Add properties for upload progress
+  uploadProgress = 0;
+  isUploading = false;
+  currentFileName = '';
 
   @ViewChild('sidenav') sidenav!: MatSidenav;
 
@@ -50,6 +56,11 @@ export class DocumentPanelComponent {
     const formData = new FormData();
     formData.append('file', file);
 
+    // Reset and initialize progress tracking
+    this.uploadProgress = 0;
+    this.isUploading = true;
+    this.currentFileName = file.name;
+
     let host: string;
     let protocol: string;
 
@@ -66,8 +77,13 @@ export class DocumentPanelComponent {
     }).subscribe({
       next: (event) => {
         if (event.type === HttpEventType.UploadProgress) {
-          // Handle upload progress if needed
+          // Calculate and update progress percentage
+          if (event.total) {
+            this.uploadProgress = Math.round(100 * event.loaded / event.total);
+          }
         } else if (event.type === HttpEventType.Response) {
+          // Upload complete
+          this.isUploading = false;
           this.snackBar.open('File uploaded successfully', 'Close', {
             duration: 3000
           });
@@ -75,6 +91,8 @@ export class DocumentPanelComponent {
         }
       },
       error: (error) => {
+        // Reset progress state on error
+        this.isUploading = false;
         console.error('Error uploading file:', error);
         this.snackBar.open('Error uploading file', 'Close', {
           duration: 3000
