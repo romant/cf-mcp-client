@@ -62,38 +62,62 @@ public class ChatService {
     }
 
     public String chat(String chat, Optional<String> documentId) {
-        HttpClient.Builder clientBuilder = HttpClient.newBuilder()
-                .sslContext(sslContext)
-                .connectTimeout(Duration.ofSeconds(30));
-
-        try ( // Open all McpSyncClients in try-with-resources
-              Stream<McpSyncClient> mcpSyncClients = mcpServiceURLs.stream()
-                      .map(url -> {
-                          HttpClientSseClientTransport transport = new HttpClientSseClientTransport(
-                                  clientBuilder, url, new ObjectMapper());
-                          return McpClient.sync(transport).requestTimeout(Duration.ofSeconds(30)).build();
-                      })
-                      .peek(McpSyncClient::initialize)) {
-
+        try (Stream<McpSyncClient> mcpSyncClients = createAndInitializeMcpClients()) {
             ToolCallbackProvider[] toolCallbackProviders = mcpSyncClients
                     .map(SyncMcpToolCallbackProvider::new)
                     .toArray(ToolCallbackProvider[]::new);
 
-            ChatClient.ChatClientRequestSpec spec = chatClient
-                    .prompt().user(chat).system(systemChatPrompt)
-                    .tools(toolCallbackProviders);
-            if (documentId.isPresent()) {
-                Advisor questionAnswerAdvisor = new QuestionAnswerAdvisor(this.vectorStore,
-                        SearchRequest.builder().build());
-                String filterExpression = DocumentService.DOCUMENT_ID + " == '" + documentId.get() + "'";
-
-                spec = spec.advisors(questionAnswerAdvisor).
-                        advisors(advisorSpec -> advisorSpec.param(QuestionAnswerAdvisor.FILTER_EXPRESSION, filterExpression));
-            }
-
-            return spec
-                    .call()
-                    .content();
+            return buildAndExecuteChatRequest(chat, documentId, toolCallbackProviders);
         }
+    }
+
+    private Stream<McpSyncClient> createAndInitializeMcpClients() {
+        HttpClient.Builder clientBuilder = createHttpClientBuilder();
+
+        return mcpServiceURLs.stream()
+                .map(url -> createMcpSyncClient(clientBuilder, url))
+                .peek(McpSyncClient::initialize);
+    }
+
+    private HttpClient.Builder createHttpClientBuilder() {
+        return HttpClient.newBuilder()
+                .sslContext(sslContext)
+                .connectTimeout(Duration.ofSeconds(30));
+    }
+
+    private McpSyncClient createMcpSyncClient(HttpClient.Builder clientBuilder, String url) {
+        HttpClientSseClientTransport transport = new HttpClientSseClientTransport(
+                clientBuilder, url, new ObjectMapper());
+        return McpClient.sync(transport).requestTimeout(Duration.ofSeconds(30)).build();
+    }
+
+    private String buildAndExecuteChatRequest(String chat, Optional<String> documentId,
+                                              ToolCallbackProvider[] toolCallbackProviders) {
+
+        ChatClient.ChatClientRequestSpec spec = chatClient.
+                prompt().
+                user(chat).
+                system(systemChatPrompt).
+                tools(toolCallbackProviders);
+
+        if (documentId.isPresent()) {
+            spec = addDocumentSearchCapabilities(spec, documentId.get());
+        }
+
+        return spec.call().content();
+    }
+
+    private ChatClient.ChatClientRequestSpec addDocumentSearchCapabilities(
+            ChatClient.ChatClientRequestSpec spec,
+            String documentId) {
+
+        Advisor questionAnswerAdvisor = new QuestionAnswerAdvisor(
+                this.vectorStore, SearchRequest.builder().build());
+
+        String filterExpression = DocumentService.DOCUMENT_ID + " == '" + documentId + "'";
+
+        return spec.advisors(questionAnswerAdvisor)
+                .advisors(advisorSpec ->
+                        advisorSpec.param(QuestionAnswerAdvisor.FILTER_EXPRESSION, filterExpression));
     }
 }

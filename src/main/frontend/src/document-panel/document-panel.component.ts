@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Inject, inject, ViewChild } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Inject, inject, Output, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient, HttpEventType } from '@angular/common/http';
 import { CommonModule, DOCUMENT } from '@angular/common';
@@ -23,6 +23,9 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 export class DocumentPanelComponent {
   documents: DocumentInfo[] = [];
   private destroyRef = inject(DestroyRef);
+
+  // Add Output event emitter for document selection
+  @Output() documentSelected = new EventEmitter<string>();
 
   // Add properties for upload progress
   uploadProgress = 0;
@@ -116,6 +119,10 @@ export class DocumentPanelComponent {
       .subscribe({
         next: (data) => {
           this.documents = data;
+          // If documents were retrieved, emit the ID of the first document
+          if (this.documents.length > 0) {
+            this.documentSelected.emit(this.documents[0].id);
+          }
         },
         error: (error) => {
           console.error('Error fetching documents:', error);
