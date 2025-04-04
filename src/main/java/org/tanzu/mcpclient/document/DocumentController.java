@@ -6,15 +6,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 public class DocumentController {
     private final DocumentService documentService;
-    private final List<DocumentInfo> documentList = new ArrayList<>();
 
     private static final Logger logger = LoggerFactory.getLogger(DocumentController.class);
 
@@ -23,50 +20,25 @@ public class DocumentController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<DocumentInfo> uploadFile(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<DocumentService.DocumentInfo> uploadFile(@RequestParam("file") MultipartFile file) {
         // Generate a unique file name to prevent conflicts
         String fileId = UUID.randomUUID().toString();
-        String originalFileName = file.getOriginalFilename();
 
-        logger.info("Uploading file " + originalFileName + " with id " + fileId);
-
-        documentService.writeToVectorStore(file, fileId);
-
-        DocumentInfo documentInfo = new DocumentInfo(
-                fileId,
-                originalFileName != null ? originalFileName : "Unknown",
-                file.getSize(),
-                Instant.now().toString()
-        );
-
-        documentList.clear();
-        documentList.add(documentInfo);
+        logger.info("Uploading file " + file.getOriginalFilename() + " with id " + fileId);
+        DocumentService.DocumentInfo documentInfo = documentService.storeFile(file, fileId);
 
         return ResponseEntity.ok(documentInfo);
     }
 
     @GetMapping("/documents")
-    public ResponseEntity<List<DocumentInfo>> getDocuments() {
-        return ResponseEntity.ok(documentList);
+    public ResponseEntity<List<DocumentService.DocumentInfo>> getDocuments() {
+        return ResponseEntity.ok(documentService.getDocuments());
     }
 
-    @DeleteMapping("/documents/{id}")
-    public ResponseEntity<Void> deleteDocument(@PathVariable String id) {
-        DocumentInfo documentInfo = documentList.stream()
-                .filter(doc -> doc.id().equals(id))
-                .findFirst()
-                .orElse(null);
+    @DeleteMapping("/documents")
+    public ResponseEntity<Void> deleteDocuments() {
 
-        if (documentInfo == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        documentList.removeIf(doc -> doc.id().equals(id));
-
+        documentService.deleteDocuments();
         return ResponseEntity.ok().build();
-    }
-
-
-    public record DocumentInfo(String id, String name, long size, String uploadDate) {
     }
 }

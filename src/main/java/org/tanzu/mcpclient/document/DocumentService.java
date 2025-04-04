@@ -9,21 +9,40 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class DocumentService {
     private final VectorStore vectorStore;
-    private final TokenTextSplitter tokenSplitter;
+    private final TokenTextSplitter tokenSplitter = new TokenTextSplitter();
+    private final List<DocumentInfo> documentList = new ArrayList<>();
 
     public final static String DOCUMENT_ID = "documentId";
 
     public DocumentService(VectorStore vectorStore) {
         this.vectorStore = vectorStore;
-        this.tokenSplitter = new TokenTextSplitter();
     }
 
-    public void writeToVectorStore(MultipartFile file, String fileId) {
+    public List<DocumentInfo> getDocuments() {
+        return documentList;
+    }
+
+    public DocumentInfo storeFile(MultipartFile file, String fileId) {
+        writeToVectorStore(file, fileId);
+
+        String fileName = Optional.ofNullable(file.getOriginalFilename())
+                .orElse("Unknown");
+        DocumentInfo documentInfo = new DocumentInfo(fileId, fileName, file.getSize(), Instant.now().toString());
+
+        documentList.clear();
+        documentList.add(documentInfo);
+        return documentInfo;
+    }
+
+    private void writeToVectorStore(MultipartFile file, String fileId) {
         Resource resource = file.getResource();
         PagePdfDocumentReader pdfReader = new PagePdfDocumentReader(resource, PdfDocumentReaderConfig.defaultConfig());
 
@@ -34,4 +53,10 @@ public class DocumentService {
         vectorStore.write(documents);
     }
 
+    public void deleteDocuments() {
+        documentList.clear();
+    }
+
+    public record DocumentInfo(String id, String name, long size, String uploadDate) {
+    }
 }
