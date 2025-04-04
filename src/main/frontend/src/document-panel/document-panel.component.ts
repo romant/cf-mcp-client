@@ -130,7 +130,7 @@ export class DocumentPanelComponent {
       });
   }
 
-  deleteDocument(id: string) {
+  deleteAllDocuments() {
     let host: string;
     let protocol: string;
 
@@ -141,17 +141,17 @@ export class DocumentPanelComponent {
     }
     protocol = this.htmlDocument.location.protocol;
 
-    this.httpClient.delete(`${protocol}//${host}/documents/${id}`)
+    this.httpClient.delete(`${protocol}//${host}/documents`)
       .subscribe({
         next: () => {
-          this.snackBar.open('Document deleted', 'Close', {
+          this.snackBar.open('All documents deleted', 'Close', {
             duration: 3000
           });
           this.fetchDocuments();
         },
         error: (error) => {
-          console.error('Error deleting document:', error);
-          this.snackBar.open('Error deleting document', 'Close', {
+          console.error('Error deleting all documents:', error);
+          this.snackBar.open('Error deleting all documents', 'Close', {
             duration: 3000
           });
         }

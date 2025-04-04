@@ -103,3 +103,9 @@ mat-sidenav {
 mat-sidenav-content {
   background: transparent;
 }
+
+.clear-files-container {
+  margin-top: 16px;
+  text-align: center;
+  padding-bottom: 16px;
+}

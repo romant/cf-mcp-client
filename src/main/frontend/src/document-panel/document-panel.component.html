@@ -39,11 +39,15 @@
           <mat-icon matListItemIcon>insert_drive_file</mat-icon>
           <div matListItemTitle>{{ doc.name }}</div>
           <div matListItemLine>{{ doc.size | fileSize }}</div>
-          <!--          <button mat-icon-button (click)="deleteDocument(doc.id)">-->
-          <!--            <mat-icon>delete</mat-icon>-->
-          <!--          </button>-->
         </mat-list-item>
       </mat-list>
+    </div>
+
+    <!-- Clear Files button -->
+    <div class="clear-files-container" *ngIf="documents.length > 0">
+      <button mat-raised-button color="warn" (click)="deleteAllDocuments()">
+        <mat-icon>delete_sweep</mat-icon> Clear Files
+      </button>
     </div>
   </mat-sidenav>
 

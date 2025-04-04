@@ -5,6 +5,7 @@ import org.springframework.ai.reader.pdf.PagePdfDocumentReader;
 import org.springframework.ai.reader.pdf.config.PdfDocumentReaderConfig;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,7 +38,7 @@ public class DocumentService {
                 .orElse("Unknown");
         DocumentInfo documentInfo = new DocumentInfo(fileId, fileName, file.getSize(), Instant.now().toString());
 
-        documentList.clear();
+        deleteDocuments();
         documentList.add(documentInfo);
         return documentInfo;
     }
@@ -54,6 +55,15 @@ public class DocumentService {
     }
 
     public void deleteDocuments() {
+        for (DocumentInfo documentInfo : documentList) {
+            Filter.Expression filterExpression = new Filter.Expression(Filter.ExpressionType.EQ,
+                    new Filter.Key(DOCUMENT_ID),
+                    new Filter.Value(documentInfo.id)
+            );
+
+            vectorStore.delete(filterExpression);
+        }
+
         documentList.clear();
     }
 
