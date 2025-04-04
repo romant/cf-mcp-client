@@ -123,6 +123,9 @@ export class DocumentPanelComponent {
           if (this.documents.length > 0) {
             this.documentSelected.emit(this.documents[0].id);
           }
+          else {
+            this.documentSelected.emit('');
+          }
         },
         error: (error) => {
           console.error('Error fetching documents:', error);

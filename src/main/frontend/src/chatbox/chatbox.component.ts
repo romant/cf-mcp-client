@@ -27,7 +27,7 @@ import {MarkdownComponent} from 'ngx-markdown';
   styleUrl: './chatbox.component.css'
 })
 export class ChatboxComponent {
-  @Input() documentId?: string;
+  @Input() documentId: string = '';
 
   messages: ChatboxMessage[] = [];
   chatMessage = '';
@@ -55,7 +55,7 @@ export class ChatboxComponent {
     this.scrollChatToBottom();
 
     let params: HttpParams = new HttpParams().set('chat', this.chatMessage);
-    if (this.documentId) {
+    if (this.documentId.length > 0) {
       params = params.set('documentId', this.documentId);
     }
 

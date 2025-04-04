@@ -24,7 +24,7 @@ export class MemoryPanelComponent {
     humanBlockValue: '',
     personaBlockValue: ''
   };
-  disabled = false;
+  disabled = true;
   conversationId: string = 'default';
   private destroyRef = inject(DestroyRef);
 

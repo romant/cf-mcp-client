@@ -14,7 +14,7 @@ import { ChatboxComponent } from '../chatbox/chatbox.component';
 })
 export class AppComponent {
   title = 'pulseui';
-  currentDocumentId?: string;
+  currentDocumentId: string = '';
 
   // Method to handle document selection from DocumentPanelComponent
   onDocumentSelected(documentId: string) {
