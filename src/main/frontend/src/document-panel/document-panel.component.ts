@@ -9,13 +9,14 @@ import { MatListModule } from '@angular/material/list';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FileSizePipe } from '../pipes/file-size.pipe';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-document-panel',
   standalone: true,
   imports: [
     CommonModule, MatSidenavModule, MatButtonModule, MatIconModule,
-    MatListModule, MatSnackBarModule, FileSizePipe, MatProgressBarModule
+    MatListModule, MatSnackBarModule, FileSizePipe, MatProgressBarModule, MatTooltipModule
   ],
   templateUrl: './document-panel.component.html',
   styleUrl: './document-panel.component.css'

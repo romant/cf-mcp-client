@@ -9,11 +9,12 @@ import {FormsModule} from '@angular/forms';
 import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input';
 import {interval} from 'rxjs';
+import {MatTooltip} from "@angular/material/tooltip";
 
 @Component({
   selector: 'app-memory-panel',
   imports: [
-    CommonModule, MatSidenavModule, MatButtonModule, MatIconModule, FormsModule, MatFormFieldModule, MatInputModule
+    CommonModule, MatSidenavModule, MatButtonModule, MatIconModule, FormsModule, MatFormFieldModule, MatInputModule, MatTooltip
   ],
   templateUrl: './memory-panel.component.html',
   styleUrl: './memory-panel.component.css'
