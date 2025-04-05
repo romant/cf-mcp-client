@@ -21,6 +21,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Configuration
 public class ChatConfiguration {
@@ -28,6 +29,11 @@ public class ChatConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(ChatConfiguration.class);
 
     private static final String MCP_SERVICE_URL = "mcpServiceURL";
+    private static final String MODEL_CAPABILITIES = "model_capabilities";
+    private static final String CHAT_CAPABILITY = "chat";
+    private static final String GENAI_LABEL = "genai";
+
+    private final String chatModel;
     private final List<String> agentServices = new ArrayList<>();
     private final List<String> mcpServiceURLs = new ArrayList<>();
 
@@ -44,31 +50,32 @@ public class ChatConfiguration {
                 agentServices.add(cfService.getName());
             }
         }
-    }
 
-    public List<String> getAgentServices() {
-        return agentServices;
-    }
-
-    public List<String> getMcpServiceURLs() {
-        return mcpServiceURLs;
-    }
-
-    @Bean
-    public String getChatModel() {
-        CfEnv cfEnv = new CfEnv();
-
-        return cfEnv.findServicesByLabel("genai").stream()
+        chatModel = cfEnv.findServicesByLabel(GENAI_LABEL).stream()
                 .filter(this::isChatService)
                 .findFirst()
                 .map(CfService::getName)
                 .orElse("");
     }
 
+    @Bean
+    public List<String> mcpServiceURLs() {
+        return mcpServiceURLs;
+    }
+
+    public List<String> getAgentServices() {
+        return agentServices;
+    }
+
+    public String getChatModel() {
+        return chatModel;
+    }
+
     private boolean isChatService(CfService service) {
-        return service.getCredentials() != null &&
-                service.getCredentials().getString("model_capabilities") != null &&
-                service.getCredentials().getString("model_capabilities").contains("chat");
+        return Optional.ofNullable(service.getCredentials())
+                .map(creds -> creds.getString(MODEL_CAPABILITIES))
+                .filter(capabilities -> capabilities.contains(CHAT_CAPABILITY))
+                .isPresent();
     }
 
     @Bean
@@ -105,11 +112,9 @@ public class ChatConfiguration {
                         return null;
                     }
 
-                    public void checkClientTrusted(X509Certificate[] certs, String authType) {
-                    }
+                    public void checkClientTrusted(X509Certificate[] certs, String authType) {}
 
-                    public void checkServerTrusted(X509Certificate[] certs, String authType) {
-                    }
+                    public void checkServerTrusted(X509Certificate[] certs, String authType) {}
                 }
         };
 

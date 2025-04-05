@@ -20,7 +20,7 @@ import {MatTooltip} from "@angular/material/tooltip";
   styleUrl: './memory-panel.component.css'
 })
 export class MemoryPanelComponent {
-  metrics: MemoryMetrics = {
+  metrics: PlatformMetrics = {
     memoryService: '',
     contextSize: 0,
     humanBlockValue: '',
@@ -42,11 +42,11 @@ export class MemoryPanelComponent {
   private initMetricsPolling(): void {
     // Set up interval to fetch metrics every 5 seconds
     // Using takeUntilDestroyed operator for automatic cleanup
-    this.fetchMemoryMetrics();
+    this.fetchMetrics();
     interval(5000)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
-        this.fetchMemoryMetrics();
+        this.fetchMetrics();
       });
   }
 
@@ -56,7 +56,7 @@ export class MemoryPanelComponent {
     }
   }
 
-  fetchMemoryMetrics() {
+  fetchMetrics() {
     let host: string;
     let protocol: string;
 
@@ -67,7 +67,7 @@ export class MemoryPanelComponent {
     }
     protocol = this.document.location.protocol;
 
-    this.httpClient.get<MemoryMetrics>(`${protocol}//${host}/metrics/${this.conversationId}`)
+    this.httpClient.get<PlatformMetrics>(`${protocol}//${host}/metrics/${this.conversationId}`)
       .subscribe({
         next: (data) => {
           this.metrics = data;
@@ -83,7 +83,7 @@ export class MemoryPanelComponent {
   }
 }
 
-interface MemoryMetrics {
+interface PlatformMetrics {
   memoryService: string;
   contextSize: number;
   humanBlockValue: string;
