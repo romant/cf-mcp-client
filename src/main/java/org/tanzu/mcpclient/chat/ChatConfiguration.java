@@ -28,12 +28,12 @@ public class ChatConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(ChatConfiguration.class);
 
     private static final String MCP_SERVICE_URL = "mcpServiceURL";
+    private final List<String> agentServices = new ArrayList<>();
+    private final List<String> mcpServiceURLs = new ArrayList<>();
 
-    @Bean
-    public List<String> mcpServiceURLs() {
+    public ChatConfiguration() {
         CfEnv cfEnv = new CfEnv();
         List<CfService> cfServices = cfEnv.findAllServices();
-        List<String> mcpServiceURLs = new ArrayList<>();
 
         for (CfService cfService : cfServices) {
             CfCredentials cfCredentials = cfService.getCredentials();
@@ -41,10 +41,34 @@ public class ChatConfiguration {
             if (mcpServiceUrl != null) {
                 mcpServiceURLs.add(mcpServiceUrl);
                 logger.info("Bound to MCP Service: {}", mcpServiceUrl);
+                agentServices.add(cfService.getName());
             }
         }
+    }
 
+    public List<String> getAgentServices() {
+        return agentServices;
+    }
+
+    public List<String> getMcpServiceURLs() {
         return mcpServiceURLs;
+    }
+
+    @Bean
+    public String getChatModel() {
+        CfEnv cfEnv = new CfEnv();
+
+        return cfEnv.findServicesByLabel("genai").stream()
+                .filter(this::isChatService)
+                .findFirst()
+                .map(CfService::getName)
+                .orElse("");
+    }
+
+    private boolean isChatService(CfService service) {
+        return service.getCredentials() != null &&
+                service.getCredentials().getString("model_capabilities") != null &&
+                service.getCredentials().getString("model_capabilities").contains("chat");
     }
 
     @Bean

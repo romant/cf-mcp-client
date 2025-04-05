@@ -1,5 +1,4 @@
 import { Component, DestroyRef, EventEmitter, Inject, inject, Output, ViewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient, HttpEventType } from '@angular/common/http';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
@@ -23,7 +22,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 })
 export class DocumentPanelComponent {
   documents: DocumentInfo[] = [];
-  private destroyRef = inject(DestroyRef);
 
   // Add Output event emitter for document selection
   @Output() documentSelected = new EventEmitter<string>();
