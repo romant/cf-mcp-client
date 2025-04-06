@@ -16,7 +16,7 @@ public class MemGPTConfiguration {
     private static final String MEM_GPT = "memGPTUrl";
     private static final Logger logger = LoggerFactory.getLogger(MemGPTConfiguration.class);
 
-    private Optional<String> memGPTUrl;
+    private Optional<String> memGPTUrl = Optional.empty();
     private String memoryService = "";
 
     public MemGPTConfiguration() {

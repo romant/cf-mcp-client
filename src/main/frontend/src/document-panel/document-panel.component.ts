@@ -1,4 +1,4 @@
-import { Component, DestroyRef, EventEmitter, Inject, inject, Output, ViewChild } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Inject, inject, Input, Output, ViewChild } from '@angular/core';
 import { HttpClient, HttpEventType } from '@angular/common/http';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
@@ -9,6 +9,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FileSizePipe } from '../pipes/file-size.pipe';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { PlatformMetrics } from '../app/app.component';
 
 @Component({
   selector: 'app-document-panel',
@@ -22,6 +23,16 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 })
 export class DocumentPanelComponent {
   documents: DocumentInfo[] = [];
+
+  @Input() metrics: PlatformMetrics = {
+    memoryService: '',
+    contextSize: 0,
+    humanBlockValue: '',
+    personaBlockValue: '',
+    chatModel: '',
+    embeddingModel: '',
+    vectorDatabase: ''
+  };
 
   // Add Output event emitter for document selection
   @Output() documentSelected = new EventEmitter<string>();

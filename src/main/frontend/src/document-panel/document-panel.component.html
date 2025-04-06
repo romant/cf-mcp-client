@@ -13,6 +13,23 @@
       </button>
     </div>
 
+    <div class="status-container">
+      <div class="status-row">
+        <span class="status-label">Vector Store:</span>
+        <span class="status-indicator" [ngClass]="{'status-green': metrics.vectorDatabase !== '', 'status-red': metrics.vectorDatabase === ''}">
+          <mat-icon>{{ metrics.vectorDatabase !== '' ? 'check_circle' : 'error' }}</mat-icon>
+          <span class="status-text">{{ metrics.vectorDatabase !== '' ? metrics.vectorDatabase : 'Not Available' }}</span>
+        </span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Embed Model:</span>
+        <span class="status-indicator" [ngClass]="{'status-green': metrics.embeddingModel !== '', 'status-red': metrics.embeddingModel === ''}">
+          <mat-icon>{{ metrics.embeddingModel !== '' ? 'check_circle' : 'error' }}</mat-icon>
+          <span class="status-text">{{ metrics.embeddingModel !== '' ? metrics.embeddingModel : 'Not Available' }}</span>
+        </span>
+      </div>
+    </div>
+
     <div class="upload-container">
       <button mat-raised-button color="primary" (click)="fileInput.click()" [disabled]="isUploading">
         <mat-icon>upload</mat-icon> Upload File

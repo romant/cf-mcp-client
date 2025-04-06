@@ -4,13 +4,15 @@
     <span style="flex:1 1 auto"></span>
   </mat-toolbar>
 
-  <app-document-panel (documentSelected)="onDocumentSelected($event)"></app-document-panel>
+  <app-document-panel
+    [metrics]="metrics"
+    (documentSelected)="onDocumentSelected($event)">
+  </app-document-panel>
   <app-memory-panel
     [metrics]="metrics"
     [disabled]="memoryPanelDisabled"
     (conversationIdChanged)="updateConversationId($event)">
   </app-memory-panel>
-
 
   <app-chatbox [documentId]="currentDocumentId"></app-chatbox>
 </main>
