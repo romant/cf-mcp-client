@@ -1,0 +1,44 @@
+<div class="agents-container">
+  <button mat-icon-button class="toggle-button" (click)="toggleSidenav()" matTooltip="Agents" matTooltipPosition="left">
+    <mat-icon>api</mat-icon>
+  </button>
+</div>
+
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #sidenav mode="over" position="end" fixedInViewport="true">
+    <div class="sidenav-header">
+      <h2>Agents</h2>
+      <button mat-icon-button (click)="sidenav.close()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="status-container">
+      <div class="status-row">
+        <span class="status-label">Status:</span>
+        <span class="status-indicator" [ngClass]="{'status-green': metrics.agents.length > 0, 'status-red': metrics.agents.length === 0}">
+          <mat-icon>{{ metrics.agents.length > 0 ? 'check_circle' : 'error' }}</mat-icon>
+          <span class="status-text">{{ metrics.agents.length > 0 ? 'Available' : 'Not Available' }}</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="agents-list" *ngIf="metrics.agents.length > 0">
+      <h3>Available Agents</h3>
+      <mat-list>
+        <mat-list-item *ngFor="let agent of metrics.agents">
+          <mat-icon matListItemIcon>smart_toy</mat-icon>
+          <div matListItemTitle>{{ agent }}</div>
+        </mat-list-item>
+      </mat-list>
+    </div>
+
+    <div class="empty-state" *ngIf="metrics.agents.length === 0">
+      None
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <!-- This is intentionally empty -->
+  </mat-sidenav-content>
+</mat-sidenav-container>

@@ -11,6 +11,9 @@
     [metrics]="metrics"
     (documentSelected)="onDocumentSelected($event)">
   </app-document-panel>
+  <app-agents-panel
+    [metrics]="metrics">
+  </app-agents-panel>
   <app-memory-panel
     [metrics]="metrics"
     (conversationIdChanged)="updateConversationId($event)">
