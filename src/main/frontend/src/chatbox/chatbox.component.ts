@@ -18,6 +18,7 @@ import {MatFormField} from '@angular/material/form-field';
 import {MatInput, MatInputModule} from '@angular/material/input';
 import {MatCard, MatCardContent} from '@angular/material/card';
 import {MarkdownComponent} from 'ngx-markdown';
+import {PlatformMetrics} from '../app/app.component';
 
 @Component({
   selector: 'app-chatbox',
@@ -28,6 +29,7 @@ import {MarkdownComponent} from 'ngx-markdown';
 })
 export class ChatboxComponent {
   @Input() documentId: string = '';
+  @Input() metrics!: PlatformMetrics;
 
   messages: ChatboxMessage[] = [];
   chatMessage = '';
@@ -59,13 +61,17 @@ export class ChatboxComponent {
       params = params.set('documentId', this.documentId);
     }
 
-    const messageToSend = this.chatMessage;
     this.chatMessage = '';
+    let response: ChatResponse;
 
     try {
-      let response: ChatResponse = await lastValueFrom(
-        this.httpClient.get<ChatResponse>(`${this.protocol}//${this.host}/chat`, {params})
-      );
+      if (this.metrics.chatModel == '') {
+        response = {message: 'No chat model available'};
+      } else {
+        response = await lastValueFrom(
+          this.httpClient.get<ChatResponse>(`${this.protocol}//${this.host}/chat`, {params})
+        );
+      }
 
       // Use ngZone.run to ensure Angular detects the change and updates the view
       this.ngZone.run(() => {

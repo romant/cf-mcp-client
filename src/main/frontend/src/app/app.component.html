@@ -19,5 +19,8 @@
     (conversationIdChanged)="updateConversationId($event)">
   </app-memory-panel>
 
-  <app-chatbox [documentId]="currentDocumentId"></app-chatbox>
+  <app-chatbox
+    [metrics]="metrics"
+    [documentId]="currentDocumentId">
+  </app-chatbox>
 </main>
