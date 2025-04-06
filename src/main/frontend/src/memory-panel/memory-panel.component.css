@@ -101,3 +101,45 @@ mat-sidenav-content {
 .conversation-id-field {
   width: 100%;
 }
+
+.status-container {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.status-label {
+  flex: 0 0 100px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.status-indicator mat-icon {
+  margin-right: 8px;
+  font-size: 18px;
+  height: 18px;
+  width: 18px;
+}
+
+.status-green {
+  color: #4CAF50;
+}
+
+.status-red {
+  color: #F44336;
+}
+
+.status-text {
+  font-size: 14px;
+}

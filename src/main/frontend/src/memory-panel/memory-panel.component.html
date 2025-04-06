@@ -12,6 +12,18 @@
         <mat-icon>close</mat-icon>
       </button>
     </div>
+
+    <div class="status-container">
+      <div class="status-row">
+        <span class="status-label">Mem Service:</span>
+        <span class="status-indicator"
+              [ngClass]="{'status-green': metrics.memoryService !== '', 'status-red': metrics.memoryService === ''}">
+          <mat-icon>{{ metrics.memoryService !== '' ? 'check_circle' : 'error' }}</mat-icon>
+          <span class="status-text">{{ metrics.memoryService !== '' ? metrics.memoryService : 'Not Available' }}</span>
+        </span>
+      </div>
+    </div>
+
     <div class="conversation-id-container">
       <mat-form-field appearance="outline" class="conversation-id-field">
         <mat-label>Conversation ID</mat-label>
