@@ -4,7 +4,7 @@
 
 .toggle-button {
   position: fixed;
-  top: 72px;
+  top: 120px;
   right: 16px;
   z-index: 1000;
   background-color: var(--mat-sys-primary-container);

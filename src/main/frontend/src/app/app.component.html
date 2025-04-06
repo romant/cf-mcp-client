@@ -4,6 +4,9 @@
     <span style="flex:1 1 auto"></span>
   </mat-toolbar>
 
+  <app-chat-panel
+    [metrics]="metrics">
+  </app-chat-panel>
   <app-document-panel
     [metrics]="metrics"
     (documentSelected)="onDocumentSelected($event)">

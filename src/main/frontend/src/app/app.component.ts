@@ -1,5 +1,6 @@
 import { Component, DestroyRef, Inject, inject } from '@angular/core';
 import { MatToolbar } from '@angular/material/toolbar';
+import { ChatPanelComponent } from '../chat-panel/chat-panel.component';
 import { MemoryPanelComponent } from '../memory-panel/memory-panel.component';
 import { DocumentPanelComponent } from '../document-panel/document-panel.component';
 import { ChatboxComponent } from '../chatbox/chatbox.component';
@@ -11,7 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [MatToolbar, MemoryPanelComponent, DocumentPanelComponent, ChatboxComponent],
+  imports: [MatToolbar, ChatPanelComponent, MemoryPanelComponent, DocumentPanelComponent, ChatboxComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
