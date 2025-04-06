@@ -30,7 +30,8 @@ export class AppComponent {
     personaBlockValue: '',
     chatModel: '',
     embeddingModel: '',
-    vectorDatabase: ''
+    vectorDatabase: '',
+    agents: []
   };
 
   constructor(private httpClient: HttpClient, @Inject(DOCUMENT) private document: Document) {
@@ -79,7 +80,8 @@ export class AppComponent {
             personaBlockValue: '',
             chatModel: '',
             embeddingModel: '',
-            vectorDatabase: ''
+            vectorDatabase: '',
+            agents: []
           };
         }
       });
@@ -100,5 +102,6 @@ export interface PlatformMetrics {
   chatModel: string;
   embeddingModel: string;
   vectorDatabase: string;
+  agents: string[];
 }
 

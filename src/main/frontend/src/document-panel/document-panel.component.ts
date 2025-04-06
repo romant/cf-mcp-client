@@ -24,15 +24,7 @@ import { PlatformMetrics } from '../app/app.component';
 export class DocumentPanelComponent {
   documents: DocumentInfo[] = [];
 
-  @Input() metrics: PlatformMetrics = {
-    memoryService: '',
-    contextSize: 0,
-    humanBlockValue: '',
-    personaBlockValue: '',
-    chatModel: '',
-    embeddingModel: '',
-    vectorDatabase: ''
-  };
+  @Input() metrics!: PlatformMetrics;
 
   // Add Output event emitter for document selection
   @Output() documentSelected = new EventEmitter<string>();

@@ -20,15 +20,7 @@ import { PlatformMetrics } from '../app/app.component';
   styleUrl: './chat-panel.component.css'
 })
 export class ChatPanelComponent {
-  @Input() metrics: PlatformMetrics = {
-    memoryService: '',
-    contextSize: 0,
-    humanBlockValue: '',
-    personaBlockValue: '',
-    chatModel: '',
-    embeddingModel: '',
-    vectorDatabase: ''
-  };
+  @Input() metrics!: PlatformMetrics;
 
   @ViewChild('sidenav') sidenav!: MatSidenav;
 
