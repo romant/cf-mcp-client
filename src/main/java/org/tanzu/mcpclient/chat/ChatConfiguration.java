@@ -30,6 +30,7 @@ public class ChatConfiguration {
 
     private static final String MCP_SERVICE_URL = "mcpServiceURL";
     private static final String MODEL_CAPABILITIES = "model_capabilities";
+    private static final String MODEL_NAME = "model_name";
     private static final String CHAT_CAPABILITY = "chat";
     private static final String GENAI_LABEL = "genai";
 
@@ -54,7 +55,11 @@ public class ChatConfiguration {
         chatModel = cfEnv.findServicesByLabel(GENAI_LABEL).stream()
                 .filter(this::isChatService)
                 .findFirst()
-                .map(CfService::getName)
+                .map(cfService -> {
+                    CfCredentials credentials = cfService.getCredentials();
+                    String modelName = credentials != null ? credentials.getString(MODEL_NAME) : null;
+                    return modelName != null ? modelName : cfService.getName();
+                })
                 .orElse("");
     }
 

@@ -32,9 +32,6 @@ export class AppComponent {
     vectorDatabase: ''
   };
 
-  // Memory panel visibility control
-  memoryPanelDisabled = true;
-
   constructor(private httpClient: HttpClient, @Inject(DOCUMENT) private document: Document) {
     this.initMetricsPolling();
   }
@@ -71,13 +68,18 @@ export class AppComponent {
       .subscribe({
         next: (data) => {
           this.metrics = data;
-          this.memoryPanelDisabled = false;
         },
         error: (error) => {
           console.error('Error fetching memory metrics:', error);
-          if (error.status === 501) {
-            this.memoryPanelDisabled = true;
-          }
+          this.metrics = {
+            memoryService: '',
+            contextSize: 0,
+            humanBlockValue: '',
+            personaBlockValue: '',
+            chatModel: '',
+            embeddingModel: '',
+            vectorDatabase: ''
+          };
         }
       });
   }

@@ -1,35 +1,49 @@
 package org.tanzu.mcpclient.document;
 
+import io.pivotal.cfenv.core.CfCredentials;
 import io.pivotal.cfenv.core.CfEnv;
 import io.pivotal.cfenv.core.CfService;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.Optional;
+
 @Configuration
 public class DocumentConfiguration {
 
-    private VectorStore vectorStore;
+    private static final String MODEL_CAPABILITIES = "model_capabilities";
+    private static final String MODEL_NAME = "model_name";
+    private static final String EMBEDDING_CAPABILITY = "embedding";
+    private static final String GENAI_LABEL = "genai";
+
+    private final VectorStore vectorStore;
+    private final String embeddingModel;
 
     public DocumentConfiguration(VectorStore vectorStore) {
         this.vectorStore = vectorStore;
-    }
 
-    @Bean
-    public String getEmbeddingModel() {
         CfEnv cfEnv = new CfEnv();
-
-        return cfEnv.findServicesByLabel("genai").stream()
+        this.embeddingModel = cfEnv.findServicesByLabel(GENAI_LABEL).stream()
                 .filter(this::isEmbeddingService)
                 .findFirst()
-                .map(CfService::getName)
+                .map(cfService -> {
+                    CfCredentials credentials = cfService.getCredentials();
+                    String modelName = credentials != null ? credentials.getString(MODEL_NAME) : null;
+                    return modelName != null ? modelName : cfService.getName();
+                })
                 .orElse("");
     }
 
+    public String getEmbeddingModel() {
+        return embeddingModel;
+    }
+
     private boolean isEmbeddingService(CfService service) {
-        return service.getCredentials() != null &&
-                service.getCredentials().getString("model_capabilities") != null &&
-                service.getCredentials().getString("model_capabilities").contains("embedding");
+        return Optional.ofNullable(service.getCredentials())
+                .map(creds -> creds.getString(MODEL_CAPABILITIES))
+                .filter(capabilities -> capabilities.contains(EMBEDDING_CAPABILITY))
+                .isPresent();
     }
 
     @Bean

@@ -1,10 +1,8 @@
-@if (!disabled) {
-  <div class="memory-container">
-    <button mat-icon-button class="toggle-button" (click)="toggleSidenav()" matTooltip="Memory" matTooltipPosition="left">
-      <mat-icon>memory</mat-icon>
-    </button>
-  </div>
-}
+<div class="memory-container">
+  <button mat-icon-button class="toggle-button" (click)="toggleSidenav()" matTooltip="Memory" matTooltipPosition="left">
+    <mat-icon>memory</mat-icon>
+  </button>
+</div>
 
 <mat-sidenav-container class="sidenav-container">
   <mat-sidenav #sidenav mode="over" position="end" fixedInViewport="true">
