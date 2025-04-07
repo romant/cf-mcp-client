@@ -16,8 +16,10 @@ public class ChatController {
     }
 
     @GetMapping("/chat")
-    public CfChatResponse chat(@RequestParam("chat") String chat, @RequestParam(value = "documentId", required = false) Optional<String> documentId) {
-        String response = chatService.chat(chat, documentId);
+    public CfChatResponse chat(@RequestParam("chat") String chat,
+                               @RequestParam(value = "conversationId") String conversationId,
+                               @RequestParam(value = "documentId", required = false) Optional<String> documentId) {
+        String response = chatService.chat(chat, conversationId, documentId);
         return new CfChatResponse(response);
     }
 

@@ -30,6 +30,7 @@ import {PlatformMetrics} from '../app/app.component';
 export class ChatboxComponent {
   @Input() documentId: string = '';
   @Input() metrics!: PlatformMetrics;
+  @Input() conversationId!: string;
 
   messages: ChatboxMessage[] = [];
   chatMessage = '';
@@ -56,7 +57,7 @@ export class ChatboxComponent {
     this.messages.push(botMessage);
     this.scrollChatToBottom();
 
-    let params: HttpParams = new HttpParams().set('chat', this.chatMessage);
+    let params: HttpParams = new HttpParams().set('chat', this.chatMessage).set('conversationId', this.conversationId);
     if (this.documentId.length > 0) {
       params = params.set('documentId', this.documentId);
     }

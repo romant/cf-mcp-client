@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
 import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
@@ -18,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.tanzu.mcpclient.document.DocumentService;
+import org.tanzu.mcpclient.document.VectorStoreConfiguration;
 import org.tanzu.mcpclient.memgpt.MemGPTChatMemory;
 import org.tanzu.mcpclient.memgpt.MemGPTMessageChatMemoryAdvisor;
 
@@ -33,41 +36,40 @@ import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvis
 @Service
 public class ChatService {
 
-    public static final String CONVERSATION_NAME = "CF Conversation";
-
     private final ChatClient chatClient;
     private final VectorStore vectorStore;
     private final List<String> mcpServiceURLs;
     private final SSLContext sslContext;
+    private final ChatMemory chatMemory;
 
     @Value("classpath:/prompts/system-prompt.st")
     private Resource systemChatPrompt;
 
+    private static final Logger logger = LoggerFactory.getLogger(VectorStoreConfiguration.class);
+
     public ChatService(ChatClient.Builder chatClientBuilder, ChatMemory chatMemory, List<String> mcpServiceURLs,
                        VectorStore vectorStore, SSLContext sslContext) {
 
-        ChatClient.Builder builder;
-        if (chatMemory instanceof MemGPTChatMemory memGPTChatMemory) {
-            builder = chatClientBuilder.
-                    defaultAdvisors(new MemGPTMessageChatMemoryAdvisor(memGPTChatMemory, CONVERSATION_NAME));
-        } else {
-            builder = chatClientBuilder.
+        if (!(chatMemory instanceof MemGPTChatMemory)) {
+            chatClientBuilder = chatClientBuilder.
                     defaultAdvisors(new MessageChatMemoryAdvisor(chatMemory), new SimpleLoggerAdvisor()).
                     defaultAdvisors(a -> a.param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10));
         }
-        this.chatClient = builder.build();
+        this.chatClient = chatClientBuilder.build();
         this.mcpServiceURLs = mcpServiceURLs;
         this.vectorStore = vectorStore;
+        this.chatMemory = chatMemory;
         this.sslContext = sslContext;
     }
 
-    public String chat(String chat, Optional<String> documentId) {
+    public String chat(String chat, String conversationId, Optional<String> documentId) {
         try (Stream<McpSyncClient> mcpSyncClients = createAndInitializeMcpClients()) {
             ToolCallbackProvider[] toolCallbackProviders = mcpSyncClients
                     .map(SyncMcpToolCallbackProvider::new)
                     .toArray(ToolCallbackProvider[]::new);
 
-            return buildAndExecuteChatRequest(chat, documentId, toolCallbackProviders);
+            logger.info("CHAT REQUEST: conversationID = {}", conversationId);
+            return buildAndExecuteChatRequest(chat, conversationId, documentId, toolCallbackProviders);
         }
     }
 
@@ -91,7 +93,7 @@ public class ChatService {
         return McpClient.sync(transport).requestTimeout(Duration.ofSeconds(30)).build();
     }
 
-    private String buildAndExecuteChatRequest(String chat, Optional<String> documentId,
+    private String buildAndExecuteChatRequest(String chat, String conversationId, Optional<String> documentId,
                                               ToolCallbackProvider[] toolCallbackProviders) {
 
         ChatClient.ChatClientRequestSpec spec = chatClient.
@@ -102,6 +104,10 @@ public class ChatService {
 
         if (documentId.isPresent()) {
             spec = addDocumentSearchCapabilities(spec, documentId.get());
+        }
+
+        if ( this.chatMemory instanceof MemGPTChatMemory memGPTChatMemory) {
+                spec = spec.advisors(new MemGPTMessageChatMemoryAdvisor(memGPTChatMemory, conversationId));
         }
 
         return spec.call().content();
