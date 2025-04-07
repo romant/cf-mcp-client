@@ -31,7 +31,7 @@
     </div>
 
     <div class="upload-container">
-      <button mat-raised-button color="primary" (click)="fileInput.click()" [disabled]="isUploading">
+      <button mat-raised-button color="primary" (click)="fileInput.click()" [disabled]="isUploading || metrics.vectorDatabase === '' || metrics.embeddingModel === ''">
         <mat-icon>upload</mat-icon> Upload File
       </button>
       <input hidden (change)="onFileSelected($event)" #fileInput type="file" accept=".pdf,application/pdf">
