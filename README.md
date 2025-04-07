@@ -32,7 +32,7 @@ cf push
 1. Create a service instance that provides chat LLM capabilities:
 
 ```bash
-cf create-service genai [plan-name] chat-llm'
+cf create-service genai [plan-name] chat-llm
 ```
 
 2. Bind the service to your application:
@@ -50,6 +50,40 @@ cf restart ai-tool-chat
 Now your chatbot will use the LLM to respond to chat requests.
 
 ![Binding to Models](images/cf-models.png)
+
+### Binding to Vector Databases
+
+1. Create a service instance that provides embedding LLM capabilities
+
+```bash
+cf create-service genai [plan-name] embedding-llm 
+```
+
+2. Create a Postgres service instance to use as a vector database
+
+```bash
+cf create-service postgres on-demand-postgres-db vector-db
+```
+
+3. Bind the services to your application
+
+```bash
+cf bind-service ai-tool-chat embedding-llm 
+cf bind-service ai-tool-chat chat-llm vector-db
+```
+
+4. Restart your application to apply the binding:
+
+```bash
+cf restart ai-tool-chat
+```
+
+5. Click on the document tool on the right-side of the screen, and upload a .PDF File
+![Upload File](images/uploads.png)
+
+Now your chatbot will respond to queries about the uploaded document
+
+![Vector DBs](images/cf-vector-dbs.png)
 
 ### Binding to MCP Agents
 
