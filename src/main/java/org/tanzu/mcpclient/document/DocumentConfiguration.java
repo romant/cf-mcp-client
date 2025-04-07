@@ -48,9 +48,6 @@ public class DocumentConfiguration {
 
     @Bean
     public String getVectorDatabase() {
-        if (vectorStore == null) {
-            return "";
-        }
         return vectorStore.getName();
     }
 }
