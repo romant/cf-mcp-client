@@ -8,6 +8,7 @@ import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.Filter;
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
@@ -26,19 +27,23 @@ import static org.springframework.ai.vectorstore.pgvector.PgVectorStore.PgIndexT
 @Configuration
 public class VectorStoreConfiguration {
 
+    private @Value("${spring.ai.vectorstore.pgvector.dimensions}") int dimensions;
+
     private static final Logger logger = LoggerFactory.getLogger(VectorStoreConfiguration.class);
 
     @Bean
     @Conditional(VectorStoreCondition.class)
     public VectorStore vectorStore(JdbcTemplate jdbcTemplate, EmbeddingModel embeddingModel) {
         return PgVectorStore.builder(jdbcTemplate, embeddingModel)
-                    .dimensions(1536)                    // Optional: defaults to model dimensions or 1536
+                    .dimensions(dimensions)                    // Optional: defaults to model dimensions or 1536
                     .distanceType(COSINE_DISTANCE)       // Optional: defaults to COSINE_DISTANCE
                     .indexType(HNSW)                     // Optional: defaults to HNSW
                     .initializeSchema(true)              // Optional: defaults to false
                     .schemaName("public")                // Optional: defaults to "public"
                     .vectorTableName("vector_store")     // Optional: defaults to "vector_store"
                     .maxDocumentBatchSize(10000)         // Optional: defaults to 10000
+                    .removeExistingVectorStoreTable(true)
+                    .initializeSchema(true)
                     .build();
     }
 
