@@ -69,7 +69,7 @@ cf create-service postgres on-demand-postgres-db vector-db
 
 ```bash
 cf bind-service ai-tool-chat embedding-llm 
-cf bind-service ai-tool-chat chat-llm vector-db
+cf bind-service ai-tool-chat vector-db
 ```
 
 4. Restart your application to apply the binding:
