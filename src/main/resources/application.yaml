@@ -6,4 +6,4 @@ spring:
   ai:
     vectorstore:
       pgvector:
-        dimensions: 1536
+        dimensions: 768
