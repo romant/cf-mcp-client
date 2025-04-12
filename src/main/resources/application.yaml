@@ -3,7 +3,3 @@ spring:
     url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
     password: postgres
-  ai:
-    vectorstore:
-      pgvector:
-        dimensions: 1536 # Common values are 768, 1024, 1536
