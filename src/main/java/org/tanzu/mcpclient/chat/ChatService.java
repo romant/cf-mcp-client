@@ -8,10 +8,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.mcp.SyncMcpToolCallbackProvider;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.vectorstore.SearchRequest;
@@ -88,8 +88,10 @@ public class ChatService {
     }
 
     private McpSyncClient createMcpSyncClient(HttpClient.Builder clientBuilder, String url) {
-        HttpClientSseClientTransport transport = new HttpClientSseClientTransport(
-                clientBuilder, url, new ObjectMapper());
+        HttpClientSseClientTransport transport = HttpClientSseClientTransport.builder(url).
+                clientBuilder(clientBuilder).
+                objectMapper(new ObjectMapper()).
+                build();
         return McpClient.sync(transport).requestTimeout(Duration.ofSeconds(30)).build();
     }
 
