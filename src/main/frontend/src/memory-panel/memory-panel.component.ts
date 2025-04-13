@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, Output, ViewChild, AfterViewInit} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {MatSidenav, MatSidenavModule} from '@angular/material/sidenav';
 import {MatButtonModule} from '@angular/material/button';
@@ -8,6 +8,7 @@ import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input';
 import {MatTooltipModule} from "@angular/material/tooltip";
 import {PlatformMetrics} from '../app/app.component';
+import {SidenavService} from '../services/sidenav.service';
 
 @Component({
   selector: 'app-memory-panel',
@@ -25,7 +26,7 @@ import {PlatformMetrics} from '../app/app.component';
   templateUrl: './memory-panel.component.html',
   styleUrl: './memory-panel.component.css'
 })
-export class MemoryPanelComponent {
+export class MemoryPanelComponent implements AfterViewInit {
   // Input properties from the parent (app) component
   @Input() metrics!: PlatformMetrics;
 
@@ -45,7 +46,13 @@ export class MemoryPanelComponent {
 
   @ViewChild('sidenav') sidenav!: MatSidenav;
 
+  constructor(private sidenavService: SidenavService) {}
+
+  ngAfterViewInit(): void {
+    this.sidenavService.registerSidenav('memory', this.sidenav);
+  }
+
   toggleSidenav() {
-    this.sidenav.toggle();
+    this.sidenavService.toggle('memory');
   }
 }

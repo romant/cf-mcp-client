@@ -1,4 +1,4 @@
-import { Component, DestroyRef, EventEmitter, Inject, inject, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Inject, Input, Output, ViewChild, AfterViewInit } from '@angular/core';
 import { HttpClient, HttpEventType } from '@angular/common/http';
 import { CommonModule, DOCUMENT } from '@angular/common';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
@@ -10,6 +10,7 @@ import { FileSizePipe } from '../pipes/file-size.pipe';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { PlatformMetrics } from '../app/app.component';
+import { SidenavService } from '../services/sidenav.service';
 
 @Component({
   selector: 'app-document-panel',
@@ -21,7 +22,7 @@ import { PlatformMetrics } from '../app/app.component';
   templateUrl: './document-panel.component.html',
   styleUrl: './document-panel.component.css'
 })
-export class DocumentPanelComponent {
+export class DocumentPanelComponent implements AfterViewInit {
   documents: DocumentInfo[] = [];
 
   @Input() metrics!: PlatformMetrics;
@@ -39,13 +40,18 @@ export class DocumentPanelComponent {
   constructor(
     private httpClient: HttpClient,
     @Inject(DOCUMENT) private htmlDocument: Document,
-    private snackBar: MatSnackBar
+    private snackBar: MatSnackBar,
+    private sidenavService: SidenavService
   ) {
     this.fetchDocuments();
   }
 
+  ngAfterViewInit(): void {
+    this.sidenavService.registerSidenav('document', this.sidenav);
+  }
+
   toggleSidenav() {
-    this.sidenav.toggle();
+    this.sidenavService.toggle('document');
   }
 
   onFileSelected(event: Event) {

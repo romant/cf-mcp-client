@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild } from '@angular/core';
+import { Component, Input, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatListModule } from '@angular/material/list';
 import { PlatformMetrics } from '../app/app.component';
+import { SidenavService } from '../services/sidenav.service';
 
 @Component({
   selector: 'app-agents-panel',
@@ -21,7 +22,7 @@ import { PlatformMetrics } from '../app/app.component';
   templateUrl: './agents-panel.component.html',
   styleUrl: './agents-panel.component.css'
 })
-export class AgentsPanelComponent {
+export class AgentsPanelComponent implements AfterViewInit {
   @Input() metrics: PlatformMetrics = {
     memoryService: '',
     contextSize: 0,
@@ -35,7 +36,13 @@ export class AgentsPanelComponent {
 
   @ViewChild('sidenav') sidenav!: MatSidenav;
 
+  constructor(private sidenavService: SidenavService) {}
+
+  ngAfterViewInit(): void {
+    this.sidenavService.registerSidenav('agents', this.sidenav);
+  }
+
   toggleSidenav() {
-    this.sidenav.toggle();
+    this.sidenavService.toggle('agents');
   }
 }
