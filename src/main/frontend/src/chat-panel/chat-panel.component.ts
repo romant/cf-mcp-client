@@ -28,10 +28,10 @@ export class ChatPanelComponent implements AfterViewInit {
   constructor(private sidenavService: SidenavService) {}
 
   ngAfterViewInit(): void {
-    this.sidenavService.registerSidenav('agents', this.sidenav);
+    this.sidenavService.registerSidenav('chat', this.sidenav);
   }
 
   toggleSidenav() {
-    this.sidenavService.toggle('agents');
+    this.sidenavService.toggle('chat');
   }
 }
