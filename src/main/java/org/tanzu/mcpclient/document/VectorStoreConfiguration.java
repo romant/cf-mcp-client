@@ -41,7 +41,6 @@ public class VectorStoreConfiguration {
                     .schemaName("public")                // Optional: defaults to "public"
                     .vectorTableName("vector_store")     // Optional: defaults to "vector_store"
                     .maxDocumentBatchSize(10000)         // Optional: defaults to 10000
-                    .removeExistingVectorStoreTable(true)
                     .initializeSchema(true)
                     .build();
     }
