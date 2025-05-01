@@ -102,7 +102,7 @@ public class ChatService {
                 prompt().
                 user(chat).
                 system(systemChatPrompt).
-                tools(toolCallbackProviders);
+                toolCallbacks(toolCallbackProviders);
 
         if (documentId.isPresent()) {
             spec = addDocumentSearchCapabilities(spec, documentId.get());
