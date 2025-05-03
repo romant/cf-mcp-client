@@ -10,17 +10,15 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
-import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.mcp.SyncMcpToolCallbackProvider;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.tanzu.mcpclient.document.DocumentService;
-import org.tanzu.mcpclient.document.VectorStoreConfiguration;
 import org.tanzu.mcpclient.memgpt.MemGPTChatMemory;
 import org.tanzu.mcpclient.memgpt.MemGPTMessageChatMemoryAdvisor;
 
@@ -45,7 +43,7 @@ public class ChatService {
     @Value("classpath:/prompts/system-prompt.st")
     private Resource systemChatPrompt;
 
-    private static final Logger logger = LoggerFactory.getLogger(VectorStoreConfiguration.class);
+    private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
     public ChatService(ChatClient.Builder chatClientBuilder, ChatMemory chatMemory, List<String> mcpServiceURLs,
                        VectorStore vectorStore, SSLContext sslContext) {
@@ -119,8 +117,7 @@ public class ChatService {
             ChatClient.ChatClientRequestSpec spec,
             String documentId) {
 
-        Advisor questionAnswerAdvisor = new QuestionAnswerAdvisor(
-                this.vectorStore, SearchRequest.builder().build());
+        Advisor questionAnswerAdvisor = new QuestionAnswerAdvisor(this.vectorStore);
 
         String filterExpression = DocumentService.DOCUMENT_ID + " == '" + documentId + "'";
 
