@@ -1,5 +1,10 @@
 package org.tanzu.mcpclient.web;
 
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,6 +20,9 @@ import java.security.cert.X509Certificate;
 
 @Configuration
 public class WebConfiguration {
+    private static final Logger logger = LoggerFactory.getLogger(WebConfiguration.class);
+    private final int sessionTimeout = 1440;
+
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
@@ -30,6 +38,24 @@ public class WebConfiguration {
                                 HttpMethod.OPTIONS.name())
                         .allowedHeaders("*")
                         .maxAge(3600);
+            }
+        };
+    }
+
+    @Bean
+    public ServletContextInitializer sessionInitializer() {
+        return new ServletContextInitializer() {
+            @Override
+            public void onStartup(ServletContext servletContext) throws ServletException {
+                logger.info("Configuring session management with timeout: {} seconds", sessionTimeout);
+
+                // Set session timeout
+                servletContext.setSessionTimeout(sessionTimeout);
+
+                // Set tracking modes - use cookies
+                servletContext.setSessionTrackingModes(java.util.Set.of(
+                        jakarta.servlet.SessionTrackingMode.COOKIE
+                ));
             }
         };
     }
