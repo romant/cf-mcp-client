@@ -15,13 +15,11 @@
     [metrics]="metrics">
   </app-agents-panel>
   <app-memory-panel
-    [metrics]="metrics"
-    (conversationIdChanged)="updateConversationId($event)">
+    [metrics]="metrics">
   </app-memory-panel>
 
   <app-chatbox
     [metrics]="metrics"
-    [conversationId]="conversationId"
     [documentId]="currentDocumentId">
   </app-chatbox>
 </main>

@@ -20,11 +20,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class AppComponent {
   title = 'pulseui';
   currentDocumentId: string = '';
-  conversationId: string = 'default';
   private destroyRef = inject(DestroyRef);
 
-  // Metrics data to be shared with memory panel
+  // Metrics data to be shared with all components
   metrics: PlatformMetrics = {
+    conversationId: '',
     memoryService: '',
     contextSize: 0,
     humanBlockValue: '',
@@ -45,7 +45,7 @@ export class AppComponent {
     console.log('Document selected with ID:', documentId);
   }
 
-  // Moved from memory-panel.component.ts
+  // Initialize metrics polling
   private initMetricsPolling(): void {
     // Set up interval to fetch metrics every 5 seconds
     this.fetchMetrics();
@@ -67,7 +67,7 @@ export class AppComponent {
     }
     protocol = this.document.location.protocol;
 
-    this.httpClient.get<PlatformMetrics>(`${protocol}//${host}/memory/metrics/${this.conversationId}`)
+    this.httpClient.get<PlatformMetrics>(`${protocol}//${host}/metrics`)
       .subscribe({
         next: (data) => {
           this.metrics = data;
@@ -75,6 +75,7 @@ export class AppComponent {
         error: (error) => {
           console.error('Error fetching memory metrics:', error);
           this.metrics = {
+            conversationId: '',
             memoryService: '',
             contextSize: 0,
             humanBlockValue: '',
@@ -87,15 +88,10 @@ export class AppComponent {
         }
       });
   }
-
-  // Method to update conversationId (will be called from memory-panel)
-  updateConversationId(newId: string) {
-    this.conversationId = newId;
-    this.fetchMetrics();
-  }
 }
 
 export interface PlatformMetrics {
+  conversationId: string;
   memoryService: string;
   contextSize: number;
   humanBlockValue: string;
@@ -105,4 +101,3 @@ export interface PlatformMetrics {
   vectorDatabase: string;
   agents: string[];
 }
-

@@ -2,6 +2,7 @@ package org.tanzu.mcpclient.web;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.SessionCookieConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
@@ -29,7 +30,7 @@ public class WebConfiguration {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("*")
+                        .allowedOriginPatterns("*")  // Use allowedOriginPatterns instead of allowedOrigins when allowCredentials is true
                         .allowedMethods(
                                 HttpMethod.GET.name(),
                                 HttpMethod.POST.name(),
@@ -37,6 +38,7 @@ public class WebConfiguration {
                                 HttpMethod.DELETE.name(),
                                 HttpMethod.OPTIONS.name())
                         .allowedHeaders("*")
+                        .allowCredentials(true)  // Allow credentials (cookies)
                         .maxAge(3600);
             }
         };
@@ -56,10 +58,18 @@ public class WebConfiguration {
                 servletContext.setSessionTrackingModes(java.util.Set.of(
                         jakarta.servlet.SessionTrackingMode.COOKIE
                 ));
+
+                // Configure session cookie
+                SessionCookieConfig sessionCookieConfig = servletContext.getSessionCookieConfig();
+                sessionCookieConfig.setName("JSESSIONID");
+                sessionCookieConfig.setHttpOnly(true);
+                sessionCookieConfig.setSecure(false); // Set to true in production with HTTPS
+                sessionCookieConfig.setPath("/");
+                sessionCookieConfig.setMaxAge(sessionTimeout * 60); // Convert minutes to seconds
+                // sessionCookieConfig.setSameSite("Lax"); // Recommended for cross-origin scenarios
             }
         };
     }
-
     @Bean
     public SSLContext sslContext() throws NoSuchAlgorithmException, KeyManagementException {
         TrustManager[] trustAllCertificates = new TrustManager[]{

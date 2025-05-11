@@ -12,6 +12,8 @@ import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.memory.ChatMemoryRepository;
+import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.mcp.SyncMcpToolCallbackProvider;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.vectorstore.VectorStore;
@@ -19,8 +21,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.tanzu.mcpclient.document.DocumentService;
-import org.tanzu.mcpclient.memgpt.MemGPTChatMemory;
-import org.tanzu.mcpclient.memgpt.MemGPTMessageChatMemoryAdvisor;
 
 import javax.net.ssl.SSLContext;
 import java.net.http.HttpClient;
@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_RETRIEVE_SIZE_KEY;
+import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
 
 @Service
 public class ChatService {
@@ -38,25 +38,26 @@ public class ChatService {
     private final VectorStore vectorStore;
     private final List<String> mcpServiceURLs;
     private final SSLContext sslContext;
-    private final ChatMemory chatMemory;
 
     @Value("classpath:/prompts/system-prompt.st")
     private Resource systemChatPrompt;
 
     private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
-    public ChatService(ChatClient.Builder chatClientBuilder, ChatMemory chatMemory, List<String> mcpServiceURLs,
-                       VectorStore vectorStore, SSLContext sslContext) {
+    public ChatService(ChatClient.Builder chatClientBuilder, ChatMemoryRepository chatMemoryRepository,
+                       List<String> mcpServiceURLs, VectorStore vectorStore, SSLContext sslContext) {
 
-        if (!(chatMemory instanceof MemGPTChatMemory)) {
-            chatClientBuilder = chatClientBuilder.
-                    defaultAdvisors(new MessageChatMemoryAdvisor(chatMemory), new SimpleLoggerAdvisor()).
-                    defaultAdvisors(a -> a.param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10));
-        }
+        ChatMemory chatMemory = MessageWindowChatMemory.builder()
+                .chatMemoryRepository(chatMemoryRepository)
+                .maxMessages(10)
+                .build();
+
+        chatClientBuilder = chatClientBuilder.
+                defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build(), new SimpleLoggerAdvisor());
         this.chatClient = chatClientBuilder.build();
+
         this.mcpServiceURLs = mcpServiceURLs;
         this.vectorStore = vectorStore;
-        this.chatMemory = chatMemory;
         this.sslContext = sslContext;
     }
 
@@ -106,9 +107,7 @@ public class ChatService {
             spec = addDocumentSearchCapabilities(spec, documentId.get());
         }
 
-        if ( this.chatMemory instanceof MemGPTChatMemory memGPTChatMemory) {
-                spec = spec.advisors(new MemGPTMessageChatMemoryAdvisor(memGPTChatMemory, conversationId));
-        }
+        spec = spec.advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId));
 
         return spec.call().content();
     }
