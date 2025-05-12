@@ -17,6 +17,7 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.mcp.SyncMcpToolCallbackProvider;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -44,9 +45,8 @@ public class ChatService {
 
     private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
-    public ChatService(ChatClient.Builder chatClientBuilder, ChatMemoryRepository chatMemoryRepository,
+    public ChatService(ChatClient.Builder chatClientBuilder, @Qualifier("session-cmr") ChatMemoryRepository chatMemoryRepository,
                        List<String> mcpServiceURLs, VectorStore vectorStore, SSLContext sslContext) {
-
         ChatMemory chatMemory = MessageWindowChatMemory.builder()
                 .chatMemoryRepository(chatMemoryRepository)
                 .maxMessages(10)
