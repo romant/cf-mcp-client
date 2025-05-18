@@ -7,17 +7,13 @@ import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
+import org.springframework.ai.chat.client.advisor.api.BaseChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.ChatMemoryRepository;
-import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.mcp.SyncMcpToolCallbackProvider;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -30,7 +26,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvisor.CHAT_MEMORY_CONVERSATION_ID_KEY;
+import static org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID;
 
 @Service
 public class ChatService {
@@ -45,15 +41,9 @@ public class ChatService {
 
     private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
-    public ChatService(ChatClient.Builder chatClientBuilder, @Qualifier("session-cmr") ChatMemoryRepository chatMemoryRepository,
+    public ChatService(ChatClient.Builder chatClientBuilder, BaseChatMemoryAdvisor memoryAdvisor,
                        List<String> mcpServiceURLs, VectorStore vectorStore, SSLContext sslContext) {
-        ChatMemory chatMemory = MessageWindowChatMemory.builder()
-                .chatMemoryRepository(chatMemoryRepository)
-                .maxMessages(10)
-                .build();
-
-        chatClientBuilder = chatClientBuilder.
-                defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).build(), new SimpleLoggerAdvisor());
+        chatClientBuilder = chatClientBuilder.defaultAdvisors(memoryAdvisor, new SimpleLoggerAdvisor());
         this.chatClient = chatClientBuilder.build();
 
         this.mcpServiceURLs = mcpServiceURLs;
@@ -107,7 +97,7 @@ public class ChatService {
             spec = addDocumentSearchCapabilities(spec, documentId.get());
         }
 
-        spec = spec.advisors(a -> a.param(CHAT_MEMORY_CONVERSATION_ID_KEY, conversationId));
+        spec = spec.advisors(a -> a.param(CONVERSATION_ID, conversationId));
 
         return spec.call().content();
     }

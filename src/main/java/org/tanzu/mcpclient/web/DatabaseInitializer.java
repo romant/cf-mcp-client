@@ -4,12 +4,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.core.annotation.Order;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
 @Order(1) // Ensure this runs early in the startup process
+@Conditional(DatabaseAvailableCondition.class)
 public class DatabaseInitializer implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(DatabaseInitializer.class);
