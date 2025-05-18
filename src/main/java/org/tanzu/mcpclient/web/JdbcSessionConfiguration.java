@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.session.jdbc.config.annotation.web.http.EnableJdbcHttpSession;
 import org.springframework.session.web.context.AbstractHttpSessionApplicationInitializer;
+import org.tanzu.mcpclient.vectorstore.DatabaseAvailableCondition;
 
 @Configuration
 @EnableJdbcHttpSession(

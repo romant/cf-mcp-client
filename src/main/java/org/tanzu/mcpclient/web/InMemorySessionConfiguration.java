@@ -8,6 +8,7 @@ import org.springframework.session.config.annotation.web.http.EnableSpringHttpSe
 import org.springframework.context.annotation.Bean;
 import org.springframework.session.SessionRepository;
 import org.springframework.session.web.context.AbstractHttpSessionApplicationInitializer;
+import org.tanzu.mcpclient.vectorstore.DatabaseNotAvailableCondition;
 
 import java.time.Duration;
 import java.util.concurrent.ConcurrentHashMap;

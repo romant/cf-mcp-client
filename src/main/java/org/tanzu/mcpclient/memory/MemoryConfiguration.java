@@ -9,7 +9,7 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.tanzu.mcpclient.document.VectorStoreConfiguration;
+import org.tanzu.mcpclient.vectorstore.VectorStoreConfiguration;
 
 @Configuration
 public class MemoryConfiguration {
