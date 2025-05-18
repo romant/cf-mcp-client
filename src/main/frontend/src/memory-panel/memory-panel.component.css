@@ -140,6 +140,10 @@ mat-sidenav-content {
   color: #F44336;
 }
 
+.status-orange {
+  color: #FF9800;
+}
+
 .status-text {
   font-size: 14px;
 }

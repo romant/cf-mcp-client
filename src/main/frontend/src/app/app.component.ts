@@ -25,10 +25,6 @@ export class AppComponent {
   // Metrics data to be shared with all components
   metrics: PlatformMetrics = {
     conversationId: '',
-    memoryService: '',
-    contextSize: 0,
-    humanBlockValue: '',
-    personaBlockValue: '',
     chatModel: '',
     embeddingModel: '',
     vectorDatabase: '',
@@ -76,26 +72,17 @@ export class AppComponent {
           console.error('Error fetching memory metrics:', error);
           this.metrics = {
             conversationId: '',
-            memoryService: '',
-            contextSize: 0,
-            humanBlockValue: '',
-            personaBlockValue: '',
             chatModel: '',
             embeddingModel: '',
             vectorDatabase: '',
             agents: []
-          };
-        }
+          };        }
       });
   }
 }
 
 export interface PlatformMetrics {
   conversationId: string;
-  memoryService: string;
-  contextSize: number;
-  humanBlockValue: string;
-  personaBlockValue: string;
   chatModel: string;
   embeddingModel: string;
   vectorDatabase: string;

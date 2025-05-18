@@ -25,17 +25,22 @@ public class MetricsController {
     public Metrics getMetrics(HttpServletRequest request) {
         String conversationId = request.getSession().getId();
 
-        String humanBlockValue = "";
-        String personaBlockValue = "";
-
-        return new Metrics(conversationId, chatConfiguration.getChatModel(), documentConfiguration.getEmbeddingModel(),
-                documentConfiguration.getVectorDatabase(), chatConfiguration.getAgentServices().toArray(new String[0]),
-                "", 0, humanBlockValue, personaBlockValue);
+        return new Metrics(
+                conversationId,
+                chatConfiguration.getChatModel(),
+                documentConfiguration.getEmbeddingModel(),
+                documentConfiguration.getVectorDatabase(),
+                chatConfiguration.getAgentServices().toArray(new String[0])
+        );
     }
 
-    public record Metrics(String conversationId, String chatModel, String embeddingModel, String vectorDatabase, String[] agents,
-                          String memoryService, Integer contextSize, String humanBlockValue, String personaBlockValue){
-    }
+    public record Metrics(
+            String conversationId,
+            String chatModel,
+            String embeddingModel,
+            String vectorDatabase,
+            String[] agents
+    ) {}
 }
 
 
