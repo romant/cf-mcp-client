@@ -1,5 +1,6 @@
 package org.tanzu.mcpclient.vectorstore;
 
+import io.pivotal.cfenv.core.CfEnv;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
@@ -25,8 +26,13 @@ public class VectorStoreConfiguration {
     @Bean
     @Conditional(DatabaseAvailableCondition.class) // Use the simplified condition
     public VectorStore vectorStore(JdbcTemplate jdbcTemplate, EmbeddingModel embeddingModel) {
-        int dimensions = embeddingModel.dimensions();
+
+        int dimensions = PgVectorStore.OPENAI_EMBEDDING_DIMENSION_SIZE;
+        if ( isEmbeddingModelAvailable() ) {
+            dimensions = embeddingModel.dimensions();
+        }
         logger.info("Embedding dimensions: {}", dimensions);
+
         return PgVectorStore.builder(jdbcTemplate, embeddingModel)
                 .dimensions(dimensions)
                 .distanceType(COSINE_DISTANCE)
@@ -44,6 +50,21 @@ public class VectorStoreConfiguration {
     public VectorStore fallbackVectorStore() {
         logger.info("Creating fallback vectorStore bean");
         return new EmptyVectorStore();
+    }
+
+    private boolean isEmbeddingModelAvailable() {
+        try {
+            CfEnv cfEnv = new CfEnv();
+            return cfEnv.findServicesByLabel("genai").stream()
+                    .anyMatch(service -> {
+                        if (service.getCredentials() == null) return false;
+                        String capabilities = service.getCredentials().getString("model_capabilities");
+                        return capabilities != null && capabilities.contains("embedding");
+                    });
+        } catch (Exception e) {
+            logger.warn("Error checking for embedding model availability: {}", e.getMessage());
+            return false;
+        }
     }
 
     // Keep the EmptyVectorStore inner class
