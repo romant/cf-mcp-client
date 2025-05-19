@@ -12,8 +12,7 @@ import java.sql.Statement;
 public class DatabaseAvailabilityUtil {
     private static final Logger logger = LoggerFactory.getLogger(DatabaseAvailabilityUtil.class);
 
-    // Cache the result to avoid multiple connection attempts
-    private static Boolean databaseAvailable = null;
+    private static volatile Boolean databaseAvailable = null;
 
     /**
      * Checks if the database is available.
