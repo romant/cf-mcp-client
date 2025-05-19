@@ -1,6 +1,5 @@
 package org.tanzu.mcpclient.memory;
 
-import io.pivotal.cfenv.core.CfEnv;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -12,6 +11,7 @@ import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.tanzu.mcpclient.util.GenAIService;
 import org.tanzu.mcpclient.vectorstore.VectorStoreConfiguration;
 
 @Configuration
@@ -19,10 +19,16 @@ public class MemoryConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(MemoryConfiguration.class);
 
+    private final GenAIService genAIServiceUtil;
+
+    public MemoryConfiguration(GenAIService genAIService) {
+        this.genAIServiceUtil = genAIService;
+    }
+
     @Bean
     public BaseChatMemoryAdvisor chatMemoryAdvisor(ChatMemoryRepository chatMemoryRepository, VectorStore vectorStore) {
         BaseChatMemoryAdvisor memoryAdvisor;
-        if ( vectorStore instanceof VectorStoreConfiguration.EmptyVectorStore || !isEmbeddingModelAvailable()) {
+        if (vectorStore instanceof VectorStoreConfiguration.EmptyVectorStore || !genAIServiceUtil.isEmbeddingModelAvailable()) {
             ChatMemory chatMemory = MessageWindowChatMemory.builder()
                     .chatMemoryRepository(chatMemoryRepository)
                     .maxMessages(20)
@@ -34,20 +40,5 @@ public class MemoryConfiguration {
         }
 
         return memoryAdvisor;
-    }
-
-    private boolean isEmbeddingModelAvailable() {
-        try {
-            CfEnv cfEnv = new CfEnv();
-            return cfEnv.findServicesByLabel("genai").stream()
-                    .anyMatch(service -> {
-                        if (service.getCredentials() == null) return false;
-                        String capabilities = service.getCredentials().getString("model_capabilities");
-                        return capabilities != null && capabilities.contains("embedding");
-                    });
-        } catch (Exception e) {
-            logger.warn("Error checking for embedding model availability: {}", e.getMessage());
-            return false;
-        }
     }
 }

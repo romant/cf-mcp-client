@@ -1,6 +1,5 @@
 package org.tanzu.mcpclient.vectorstore;
 
-import io.pivotal.cfenv.core.CfEnv;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.document.Document;
@@ -12,6 +11,7 @@ import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.tanzu.mcpclient.util.GenAIService;
 
 import java.util.List;
 
@@ -23,12 +23,18 @@ public class VectorStoreConfiguration {
 
     private static final Logger logger = LoggerFactory.getLogger(VectorStoreConfiguration.class);
 
+    private final GenAIService genAIServiceUtil;
+
+    public VectorStoreConfiguration(GenAIService genAIService) {
+        this.genAIServiceUtil = genAIService;
+    }
+
     @Bean
-    @Conditional(DatabaseAvailableCondition.class) // Use the simplified condition
+    @Conditional(DatabaseAvailableCondition.class)
     public VectorStore vectorStore(JdbcTemplate jdbcTemplate, EmbeddingModel embeddingModel) {
 
         int dimensions = PgVectorStore.OPENAI_EMBEDDING_DIMENSION_SIZE;
-        if ( isEmbeddingModelAvailable() ) {
+        if (genAIServiceUtil.isEmbeddingModelAvailable()) {
             dimensions = embeddingModel.dimensions();
         }
         logger.info("Embedding dimensions: {}", dimensions);
@@ -52,24 +58,8 @@ public class VectorStoreConfiguration {
         return new EmptyVectorStore();
     }
 
-    private boolean isEmbeddingModelAvailable() {
-        try {
-            CfEnv cfEnv = new CfEnv();
-            return cfEnv.findServicesByLabel("genai").stream()
-                    .anyMatch(service -> {
-                        if (service.getCredentials() == null) return false;
-                        String capabilities = service.getCredentials().getString("model_capabilities");
-                        return capabilities != null && capabilities.contains("embedding");
-                    });
-        } catch (Exception e) {
-            logger.warn("Error checking for embedding model availability: {}", e.getMessage());
-            return false;
-        }
-    }
-
     // Keep the EmptyVectorStore inner class
     public static class EmptyVectorStore implements VectorStore {
-        // Implementation remains the same
         @Override
         public void add(List<Document> documents) {
         }
