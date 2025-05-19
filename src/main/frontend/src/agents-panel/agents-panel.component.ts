@@ -23,16 +23,7 @@ import { SidenavService } from '../services/sidenav.service';
   styleUrl: './agents-panel.component.css'
 })
 export class AgentsPanelComponent implements AfterViewInit {
-  @Input() metrics: PlatformMetrics = {
-    memoryService: '',
-    contextSize: 0,
-    humanBlockValue: '',
-    personaBlockValue: '',
-    chatModel: '',
-    embeddingModel: '',
-    vectorDatabase: '',
-    agents: []
-  };
+  @Input() metrics!: PlatformMetrics;
 
   @ViewChild('sidenav') sidenav!: MatSidenav;
 

@@ -15,11 +15,21 @@
 
     <div class="status-container">
       <div class="status-row">
-        <span class="status-label">Mem Service:</span>
+        <span class="status-label">Vector Store:</span>
         <span class="status-indicator"
-              [ngClass]="{'status-green': metrics.memoryService !== '', 'status-red': metrics.memoryService === ''}">
-          <mat-icon>{{ metrics.memoryService !== '' ? 'check_circle' : 'error' }}</mat-icon>
-          <span class="status-text">{{ metrics.memoryService !== '' ? metrics.memoryService : 'Not Available' }}</span>
+              [ngClass]="{'status-green': metrics.vectorDatabase !== '', 'status-red': metrics.vectorDatabase === ''}">
+          <mat-icon>{{ metrics.vectorDatabase !== '' ? 'check_circle' : 'error' }}</mat-icon>
+          <span
+            class="status-text">{{ metrics.vectorDatabase !== '' ? metrics.vectorDatabase : 'Not Available' }}</span>
+        </span>
+      </div>
+      <div class="status-row">
+        <span class="status-label">Embed Model:</span>
+        <span class="status-indicator"
+              [ngClass]="{'status-green': metrics.embeddingModel !== '', 'status-red': metrics.embeddingModel === ''}">
+          <mat-icon>{{ metrics.embeddingModel !== '' ? 'check_circle' : 'error' }}</mat-icon>
+          <span
+            class="status-text">{{ metrics.embeddingModel !== '' ? metrics.embeddingModel : 'Not Available' }}</span>
         </span>
       </div>
     </div>
@@ -27,22 +37,17 @@
     <div class="conversation-id-container">
       <mat-form-field appearance="outline" class="conversation-id-field">
         <mat-label>Conversation ID</mat-label>
-        <input matInput [(ngModel)]="conversationId" placeholder="Enter conversation ID">
+        <input matInput [value]="conversationId" placeholder="Conversation ID" readonly>
       </mat-form-field>
     </div>
-
-    <div class="metrics-content">
-      <div class="metric-item">
-        <span class="metric-label">Context Size:</span>
-        <span class="metric-value">{{ metrics.contextSize }}</span>
-      </div>
-      <div class="metric-item">
-        <span class="metric-label">Human Block Value:</span>
-        <span class="metric-value">{{ metrics.humanBlockValue }}</span>
-      </div>
-      <div class="metric-item">
-        <span class="metric-label">Persona Block Value:</span>
-        <span class="metric-value">{{ metrics.personaBlockValue }}</span>
+    <div class="status-container">
+      <div class="status-row">
+        <span class="status-label">Memory:</span>
+        <span class="status-indicator"
+              [ngClass]="{'status-green': metrics.vectorDatabase !== '' && metrics.embeddingModel !== '', 'status-orange': metrics.vectorDatabase === '' || metrics.embeddingModel === ''}">
+      <mat-icon>{{ metrics.vectorDatabase !== '' && metrics.embeddingModel !== '' ? 'storage' : 'memory' }}</mat-icon>
+      <span class="status-text">{{ metrics.vectorDatabase !== '' && metrics.embeddingModel !== '' ? 'Persistent' : 'Transient' }}</span>
+    </span>
       </div>
     </div>
   </mat-sidenav>

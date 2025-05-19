@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, Output, ViewChild, AfterViewInit} from '@angular/core';
+import {Component, Input, ViewChild, AfterViewInit, OnChanges, SimpleChanges} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {MatSidenav, MatSidenavModule} from '@angular/material/sidenav';
 import {MatButtonModule} from '@angular/material/button';
@@ -26,22 +26,14 @@ import {SidenavService} from '../services/sidenav.service';
   templateUrl: './memory-panel.component.html',
   styleUrl: './memory-panel.component.css'
 })
-export class MemoryPanelComponent implements AfterViewInit {
+export class MemoryPanelComponent implements AfterViewInit, OnChanges {
   // Input properties from the parent (app) component
   @Input() metrics!: PlatformMetrics;
 
-  // Output to update conversation ID in the parent component
-  @Output() conversationIdChanged = new EventEmitter<string>();
-
-  // Local conversationId property with getter/setter
-  private _conversationId: string = 'default';
+  // Local conversationId property (now read-only from metrics)
+  private _conversationId: string = '';
   get conversationId(): string {
     return this._conversationId;
-  }
-
-  set conversationId(value: string) {
-    this._conversationId = value;
-    this.conversationIdChanged.emit(value);
   }
 
   @ViewChild('sidenav') sidenav!: MatSidenav;
@@ -50,6 +42,13 @@ export class MemoryPanelComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.sidenavService.registerSidenav('memory', this.sidenav);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['metrics'] && this.metrics) {
+      // Update conversationId when metrics change
+      this._conversationId = this.metrics.conversationId;
+    }
   }
 
   toggleSidenav() {

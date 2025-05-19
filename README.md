@@ -111,26 +111,10 @@ Your chatbot will now register with the MCP agent, and the LLM will be able to i
 
 ![Binding to Agents](images/cf-agents.png)
 
-### Binding to memGPT for Extended Memory
+### Using a Vector Store for Conversation Memory
 
-If you have access to a compatible memGPT implementation service:
+If you are bound to a vector database and an embedding model, then your chat memory will persist across application restarts and scaling.
 
-1. Create a user-provided service for the memGPT service:
-
-```bash
-cf cups memGPT -p '{"memGPTUrl":"https://your-memgpt-service.example.com"}'
-```
-
-2. Bind the memGPT service to your application:
-
-```bash
-cf bind-service ai-tool-chat memGPT
-```
-
-3. Restart your application:
-
-```bash
-cf restart ai-tool-chat
-```
+1. Follow the instructions above in **Binding to Vector Databases**
 
 ![Binding to Memory](images/cf-memory.png)
