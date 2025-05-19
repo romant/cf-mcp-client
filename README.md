@@ -1,8 +1,8 @@
-# CF-MCP-Client: AI Chat Client for Cloud Foundry
+# Tanzu Platform Chat: AI Chat Client for Cloud Foundry
 
 ## Overview
 
-CF-MCP-Client is a Spring chatbot application that can be deployed to Cloud Foundry and consume platform AI services. It's built with Spring AI and leverages the Model Context Protocol (MCP) and memGPT to provide advanced capabilities:
+Tanzu Platform Chat (cf-mcp-client) is a Spring chatbot application that can be deployed to Cloud Foundry and consume platform AI services. It's built with Spring AI and works with LLMs, Vector Databases, and Model Context Protocol Agents.
 
 ## Prerequisites
 
