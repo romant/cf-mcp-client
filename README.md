@@ -7,9 +7,9 @@ Tanzu Platform Chat (cf-mcp-client) is a Spring chatbot application that can be 
 ## Prerequisites
 
 - Java 21 or higher
-  - eg using [sdkman](https://sdkman.io/) `sdk install java 21.0.7-oracle`
+  - e.g. using [sdkman](https://sdkman.io/) `sdk install java 21.0.7-oracle`
 - Maven 3.8+
-  - eg using [sdkman](https://sdkman.io/) `sdk install maven`
+  - e.g. using [sdkman](https://sdkman.io/) `sdk install maven`
 - Access to a Cloud Foundry Foundation with the GenAI tile or other LLM services
 - Developer access to your Cloud Foundry environment
 
@@ -58,7 +58,7 @@ Now your chatbot will use the LLM to respond to chat requests.
 1. Create a service instance that provides embedding LLM capabilities
 
 ```bash
-cf create-service genai [plan-name] embedding-llm 
+cf create-service genai [plan-name] embeddings-llm 
 ```
 
 2. Create a Postgres service instance to use as a vector database
@@ -70,7 +70,7 @@ cf create-service postgres on-demand-postgres-db vector-db
 3. Bind the services to your application
 
 ```bash
-cf bind-service ai-tool-chat embedding-llm 
+cf bind-service ai-tool-chat embeddings-llm 
 cf bind-service ai-tool-chat vector-db
 ```
 
