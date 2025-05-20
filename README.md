@@ -117,6 +117,6 @@ Your chatbot will now register with the MCP agent, and the LLM will be able to i
 
 If you are bound to a vector database and an embedding model, then your chat memory will persist across application restarts and scaling.
 
-1. Follow the instructions above in **Binding to Vector Databases**
+1. Follow the instructions above in [Binding to Vector Databases](#binding-to-vector-databases)
 
 ![Binding to Memory](images/cf-memory.png)
