@@ -66,6 +66,7 @@ public class WebConfiguration {
             // sessionCookieConfig.setSameSite("Lax"); // Recommended for cross-origin scenarios
         };
     }
+
     @Bean
     public SSLContext sslContext() throws NoSuchAlgorithmException, KeyManagementException {
         TrustManager[] trustAllCertificates = new TrustManager[]{
