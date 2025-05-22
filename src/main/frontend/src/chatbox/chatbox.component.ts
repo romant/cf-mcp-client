@@ -79,12 +79,7 @@ export class ChatboxComponent {
       await this.streamChatResponse(params, botMessage);
 
     } catch (error) {
-      this.ngZone.run(() => {
-        botMessage.typing = false;
-        botMessage.text = "Sorry, I encountered an error processing your request.";
-        console.error('Chat request error:', error);
-        this.scrollChatToBottom();
-      });
+      console.error('Chat request error:', error);
     }
   }
 
@@ -135,25 +130,17 @@ export class ChatboxComponent {
           }
           this.scrollChatToBottom();
         });
-        reject(error);
+        reject(error);  // Only reject here
       };
 
       eventSource.onopen = () => {
         console.log('EventSource connection opened');
       };
 
-      // Listen for the end of stream
+      // Only listen for successful completion
       eventSource.addEventListener('close', () => {
         eventSource.close();
-        resolve();
-      });
-
-      // Also close on 'error' event to handle completion
-      eventSource.addEventListener('error', (event: any) => {
-        if (event.readyState === EventSource.CLOSED) {
-          eventSource.close();
-          resolve();
-        }
+        resolve();  // Only resolve on normal completion
       });
     });
   }

@@ -43,9 +43,6 @@ public class ChatController {
                         .subscribe(
                                 chunk -> {
                                     try {
-                                        // Log what we're sending
-                                        System.out.println("Backend sending chunk: [" + chunk + "] (length: " + chunk.length() + ")");
-
                                         // Send as JSON to preserve exact content
                                         Map<String, String> payload = Map.of("content", chunk);
                                         String jsonData = objectMapper.writeValueAsString(payload);
