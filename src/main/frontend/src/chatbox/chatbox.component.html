@@ -11,8 +11,9 @@
             } @else {
               @if (message.typing) {
                 <div class="typing__dot"></div><div class="typing__dot"></div><div class="typing__dot"></div>
+              } @else {
+                <markdown [data]="message.text"></markdown>
               }
-              <markdown [data]="message.text"></markdown>
             }
           </mat-card-content>
         </mat-card>

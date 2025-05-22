@@ -11,7 +11,6 @@ import {
 } from '@angular/core';
 import {DOCUMENT} from '@angular/common';
 import {HttpClient, HttpParams} from '@angular/common/http';
-import {lastValueFrom} from 'rxjs';
 import {MatButton} from '@angular/material/button';
 import {FormsModule} from '@angular/forms';
 import {MatFormField} from '@angular/material/form-field';
@@ -63,35 +62,100 @@ export class ChatboxComponent {
     }
 
     this.chatMessage = '';
-    let response: ChatResponse;
 
     try {
       if (this.metrics.chatModel == '') {
-        response = {message: 'No chat model available'};
-      } else {
-        response = await lastValueFrom(
-          this.httpClient.get<ChatResponse>(`${this.protocol}//${this.host}/chat`, {params})
-        );
+        this.ngZone.run(() => {
+          if (botMessage.text === '') {
+            botMessage.typing = false;
+            botMessage.text = 'No chat model available';
+          }
+          this.scrollChatToBottom();
+        });
+        return;
       }
 
-      // Use ngZone.run to ensure Angular detects the change and updates the view
-      this.ngZone.run(() => {
-        botMessage.typing = false;
-        botMessage.text = response.message;
+      // Use Server-Sent Events for streaming
+      await this.streamChatResponse(params, botMessage);
 
-        // Use setTimeout to push this to the next macrotask queue
-        // after Angular has had time to render the changes
-        setTimeout(() => {
-          this.scrollChatToBottom();
-        }, 0);
-      });
     } catch (error) {
       this.ngZone.run(() => {
         botMessage.typing = false;
         botMessage.text = "Sorry, I encountered an error processing your request.";
         console.error('Chat request error:', error);
+        this.scrollChatToBottom();
       });
     }
+  }
+
+  private streamChatResponse(params: HttpParams, botMessage: ChatboxMessage): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const url = `${this.protocol}//${this.host}/chat?${params.toString()}`;
+
+      const eventSource = new EventSource(url, {
+        withCredentials: true
+      });
+
+      let isFirstChunk = true;
+
+      eventSource.onmessage = (event) => {
+        this.ngZone.run(() => {
+          if (isFirstChunk) {
+            botMessage.typing = false;
+            isFirstChunk = false;
+          }
+
+          // Handle JSON chunks
+          let chunk: string;
+          try {
+            const parsed = JSON.parse(event.data);
+            chunk = parsed.content || event.data;
+          } catch (e) {
+            chunk = event.data;
+          }
+
+          if (chunk && chunk.length > 0) {
+            botMessage.text += chunk;
+          }
+
+          // Scroll to bottom after each update
+          setTimeout(() => {
+            this.scrollChatToBottom();
+          }, 0);
+        });
+      };
+
+      eventSource.onerror = (error) => {
+        console.error('EventSource error:', error);
+        eventSource.close();
+        this.ngZone.run(() => {
+          if (botMessage.text === '') {
+            botMessage.typing = false;
+            botMessage.text = "Sorry, I encountered an error processing your request.";
+          }
+          this.scrollChatToBottom();
+        });
+        reject(error);
+      };
+
+      eventSource.onopen = () => {
+        console.log('EventSource connection opened');
+      };
+
+      // Listen for the end of stream
+      eventSource.addEventListener('close', () => {
+        eventSource.close();
+        resolve();
+      });
+
+      // Also close on 'error' event to handle completion
+      eventSource.addEventListener('error', (event: any) => {
+        if (event.readyState === EventSource.CLOSED) {
+          eventSource.close();
+          resolve();
+        }
+      });
+    });
   }
 
   scrollChatToBottom() {
@@ -114,8 +178,4 @@ interface ChatboxMessage {
   text: string;
   persona: 'user' | 'bot';
   typing?: boolean;
-}
-
-interface ChatResponse {
-  message: string
 }

@@ -18,11 +18,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.tanzu.mcpclient.document.DocumentService;
+import reactor.core.publisher.Flux;
 
 import javax.net.ssl.SSLContext;
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -51,14 +53,14 @@ public class ChatService {
         this.sslContext = sslContext;
     }
 
-    public String chat(String chat, String conversationId, Optional<String> documentId) {
+    public Flux<String> chatStream(String chat, String conversationId, Optional<String> documentId) {
         try (Stream<McpSyncClient> mcpSyncClients = createAndInitializeMcpClients()) {
             ToolCallbackProvider[] toolCallbackProviders = mcpSyncClients
                     .map(SyncMcpToolCallbackProvider::new)
                     .toArray(ToolCallbackProvider[]::new);
 
-            logger.info("CHAT REQUEST: conversationID = {}", conversationId);
-            return buildAndExecuteChatRequest(chat, conversationId, documentId, toolCallbackProviders);
+            logger.info("CHAT STREAM REQUEST: conversationID = {}", conversationId);
+            return buildAndExecuteStreamChatRequest(chat, conversationId, documentId, toolCallbackProviders);
         }
     }
 
@@ -84,8 +86,8 @@ public class ChatService {
         return McpClient.sync(transport).requestTimeout(Duration.ofSeconds(30)).build();
     }
 
-    private String buildAndExecuteChatRequest(String chat, String conversationId, Optional<String> documentId,
-                                              ToolCallbackProvider[] toolCallbackProviders) {
+    private Flux<String> buildAndExecuteStreamChatRequest(String chat, String conversationId, Optional<String> documentId,
+                                                          ToolCallbackProvider[] toolCallbackProviders) {
 
         ChatClient.ChatClientRequestSpec spec = chatClient.
                 prompt().
@@ -99,7 +101,8 @@ public class ChatService {
 
         spec = spec.advisors(a -> a.param(CONVERSATION_ID, conversationId));
 
-        return spec.call().content();
+        return spec.stream().content()
+                .filter(Objects::nonNull);
     }
 
     private ChatClient.ChatClientRequestSpec addDocumentSearchCapabilities(
