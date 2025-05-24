@@ -17,10 +17,10 @@
       <div class="status-row">
         <span class="status-label">Vector Store:</span>
         <span class="status-indicator"
-              [ngClass]="{'status-green': metrics.vectorDatabase !== '', 'status-red': metrics.vectorDatabase === ''}">
-          <mat-icon>{{ metrics.vectorDatabase !== '' ? 'check_circle' : 'error' }}</mat-icon>
+              [ngClass]="{'status-green': metrics.vectorStoreName !== '', 'status-red': metrics.vectorStoreName === ''}">
+          <mat-icon>{{ metrics.vectorStoreName !== '' ? 'check_circle' : 'error' }}</mat-icon>
           <span
-            class="status-text">{{ metrics.vectorDatabase !== '' ? metrics.vectorDatabase : 'Not Available' }}</span>
+            class="status-text">{{ metrics.vectorStoreName !== '' ? metrics.vectorStoreName : 'Not Available' }}</span>
         </span>
       </div>
       <div class="status-row">
@@ -44,9 +44,9 @@
       <div class="status-row">
         <span class="status-label">Memory:</span>
         <span class="status-indicator"
-              [ngClass]="{'status-green': metrics.vectorDatabase !== '' && metrics.embeddingModel !== '', 'status-orange': metrics.vectorDatabase === '' || metrics.embeddingModel === ''}">
-      <mat-icon>{{ metrics.vectorDatabase !== '' && metrics.embeddingModel !== '' ? 'storage' : 'memory' }}</mat-icon>
-      <span class="status-text">{{ metrics.vectorDatabase !== '' && metrics.embeddingModel !== '' ? 'Persistent' : 'Transient' }}</span>
+              [ngClass]="{'status-green': metrics.vectorStoreName !== '' && metrics.embeddingModel !== '', 'status-orange': metrics.vectorStoreName === '' || metrics.embeddingModel === ''}">
+      <mat-icon>{{ metrics.vectorStoreName !== '' && metrics.embeddingModel !== '' ? 'storage' : 'memory' }}</mat-icon>
+      <span class="status-text">{{ metrics.vectorStoreName !== '' && metrics.embeddingModel !== '' ? 'Persistent' : 'Transient' }}</span>
     </span>
       </div>
     </div>

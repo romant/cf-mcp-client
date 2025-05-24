@@ -27,7 +27,7 @@ export class AppComponent {
     conversationId: '',
     chatModel: '',
     embeddingModel: '',
-    vectorDatabase: '',
+    vectorStoreName: '',
     agents: []
   };
 
@@ -74,7 +74,7 @@ export class AppComponent {
             conversationId: '',
             chatModel: '',
             embeddingModel: '',
-            vectorDatabase: '',
+            vectorStoreName: '',
             agents: []
           };        }
       });
@@ -85,6 +85,6 @@ export interface PlatformMetrics {
   conversationId: string;
   chatModel: string;
   embeddingModel: string;
-  vectorDatabase: string;
+  vectorStoreName: string;
   agents: string[];
 }

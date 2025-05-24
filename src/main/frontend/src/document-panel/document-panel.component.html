@@ -16,9 +16,9 @@
     <div class="status-container">
       <div class="status-row">
         <span class="status-label">Vector Store:</span>
-        <span class="status-indicator" [ngClass]="{'status-green': metrics.vectorDatabase !== '', 'status-red': metrics.vectorDatabase === ''}">
-          <mat-icon>{{ metrics.vectorDatabase !== '' ? 'check_circle' : 'error' }}</mat-icon>
-          <span class="status-text">{{ metrics.vectorDatabase !== '' ? metrics.vectorDatabase : 'Not Available' }}</span>
+        <span class="status-indicator" [ngClass]="{'status-green': metrics.vectorStoreName !== '', 'status-red': metrics.vectorStoreName === ''}">
+          <mat-icon>{{ metrics.vectorStoreName !== '' ? 'check_circle' : 'error' }}</mat-icon>
+          <span class="status-text">{{ metrics.vectorStoreName !== '' ? metrics.vectorStoreName : 'Not Available' }}</span>
         </span>
       </div>
       <div class="status-row">
@@ -31,7 +31,7 @@
     </div>
 
     <div class="upload-container">
-      <button mat-raised-button color="primary" (click)="fileInput.click()" [disabled]="isUploading || metrics.vectorDatabase === '' || metrics.embeddingModel === ''">
+      <button mat-raised-button color="primary" (click)="fileInput.click()" [disabled]="isUploading || metrics.vectorStoreName === '' || metrics.embeddingModel === ''">
         <mat-icon>upload</mat-icon> Upload File
       </button>
       <input hidden (change)="onFileSelected($event)" #fileInput type="file" accept=".pdf,application/pdf">
