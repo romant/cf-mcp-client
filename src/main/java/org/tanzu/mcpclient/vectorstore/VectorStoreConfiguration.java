@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.tanzu.mcpclient.util.GenAIService;
+import org.springframework.lang.NonNull;
 
 import java.util.List;
 
@@ -58,26 +59,26 @@ public class VectorStoreConfiguration {
         return new EmptyVectorStore();
     }
 
-    // Keep the EmptyVectorStore inner class
     public static class EmptyVectorStore implements VectorStore {
         @Override
-        public void add(List<Document> documents) {
+        public void add(@NonNull List<Document> documents) {
         }
 
         @Override
-        public void delete(List<String> idList) {
+        public void delete(@NonNull List<String> idList) {
         }
 
         @Override
-        public void delete(Filter.Expression filterExpression) {
+        public void delete(@NonNull Filter.Expression filterExpression) {
         }
 
         @Override
-        public List<Document> similaritySearch(SearchRequest request) {
+        public List<Document> similaritySearch(@NonNull SearchRequest request) {
             return List.of();
         }
 
         @Override
+        @NonNull
         public String getName() {
             return "";
         }
