@@ -81,10 +81,15 @@ export class AppComponent {
   }
 }
 
+export interface Agent {
+  name: string;
+  healthy: boolean;
+}
+
 export interface PlatformMetrics {
   conversationId: string;
   chatModel: string;
   embeddingModel: string;
   vectorStoreName: string;
-  agents: string[];
+  agents: Agent[];
 }

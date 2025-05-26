@@ -16,9 +16,9 @@
     <div class="status-container">
       <div class="status-row">
         <span class="status-label">Status:</span>
-        <span class="status-indicator" [ngClass]="{'status-green': metrics.agents.length > 0, 'status-red': metrics.agents.length === 0}">
-          <mat-icon>{{ metrics.agents.length > 0 ? 'check_circle' : 'error' }}</mat-icon>
-          <span class="status-text">{{ metrics.agents.length > 0 ? 'Available' : 'Not Available' }}</span>
+        <span class="status-indicator" [ngClass]="getOverallStatusClass()">
+          <mat-icon>{{ getOverallStatusIcon() }}</mat-icon>
+          <span class="status-text">{{ getOverallStatusText() }}</span>
         </span>
       </div>
     </div>
@@ -27,8 +27,11 @@
       <h3>Available Agents</h3>
       <mat-list>
         <mat-list-item *ngFor="let agent of metrics.agents">
-          <mat-icon matListItemIcon>smart_toy</mat-icon>
-          <div matListItemTitle>{{ agent }}</div>
+          <mat-icon matListItemIcon [ngClass]="{'status-red': !agent.healthy, 'status-green': agent.healthy}">
+            {{ agent.healthy ? 'smart_toy' : 'close' }}
+          </mat-icon>
+          <div matListItemTitle>{{ agent.name }}</div>
+          <div matListItemLine>{{ agent.healthy ? 'Healthy' : 'Unhealthy' }}</div>
         </mat-list-item>
       </mat-list>
     </div>
