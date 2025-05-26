@@ -26,7 +26,7 @@
     <div class="agents-list" *ngIf="metrics.agents.length > 0">
       <h3>Available Agents</h3>
       <mat-list>
-        <mat-list-item *ngFor="let agent of metrics.agents">
+        <mat-list-item *ngFor="let agent of sortedAgents">
           <button mat-icon-button matListItemIcon
                   [ngClass]="{'status-red': !agent.healthy, 'status-green': agent.healthy}"
                   [disabled]="!agent.healthy"

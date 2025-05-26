@@ -43,6 +43,22 @@ export class AgentsPanelComponent implements AfterViewInit {
     this.sidenavService.toggle('agents');
   }
 
+  get sortedAgents(): Agent[] {
+    if (!this.metrics || !this.metrics.agents) {
+      return [];
+    }
+
+    const healthyAgents = this.metrics.agents
+      .filter(agent => agent.healthy)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    const unhealthyAgents = this.metrics.agents
+      .filter(agent => !agent.healthy)
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return [...healthyAgents, ...unhealthyAgents];
+  }
+
   showAgentTools(agent: Agent): void {
     if (!agent.healthy) {
       return; // Don't show modal for unhealthy agents
