@@ -1,0 +1,61 @@
+.tools-modal {
+  min-width: 400px;
+  max-width: 600px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.modal-header h2 {
+  margin: 0;
+  flex: 1;
+}
+
+.close-button {
+  margin-left: 16px;
+}
+
+.modal-content {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.no-tools {
+  text-align: center;
+  padding: 32px 16px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.no-tools-icon {
+  font-size: 48px;
+  height: 48px;
+  width: 48px;
+  margin-bottom: 16px;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+.tools-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tool-card {
+  border-left: 4px solid var(--mat-sys-primary);
+}
+
+.tool-name {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--mat-sys-primary);
+}
+
+.tool-description {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.7);
+  line-height: 1.4;
+}

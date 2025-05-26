@@ -5,8 +5,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatListModule } from '@angular/material/list';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { PlatformMetrics, Agent } from '../app/app.component';
 import { SidenavService } from '../services/sidenav.service';
+import { ToolsModalComponent } from '../tools-modal/tools-modal.component';
 
 @Component({
   selector: 'app-agents-panel',
@@ -17,7 +19,8 @@ import { SidenavService } from '../services/sidenav.service';
     MatButtonModule,
     MatIconModule,
     MatTooltipModule,
-    MatListModule
+    MatListModule,
+    MatDialogModule
   ],
   templateUrl: './agents-panel.component.html',
   styleUrl: './agents-panel.component.css'
@@ -27,7 +30,10 @@ export class AgentsPanelComponent implements AfterViewInit {
 
   @ViewChild('sidenav') sidenav!: MatSidenav;
 
-  constructor(private sidenavService: SidenavService) {}
+  constructor(
+    private sidenavService: SidenavService,
+    private dialog: MatDialog
+  ) {}
 
   ngAfterViewInit(): void {
     this.sidenavService.registerSidenav('agents', this.sidenav);
@@ -37,9 +43,18 @@ export class AgentsPanelComponent implements AfterViewInit {
     this.sidenavService.toggle('agents');
   }
 
-  /**
-   * Get the overall status class for styling
-   */
+  showAgentTools(agent: Agent): void {
+    if (!agent.healthy) {
+      return; // Don't show modal for unhealthy agents
+    }
+
+    this.dialog.open(ToolsModalComponent, {
+      data: { agent },
+      width: '600px',
+      maxHeight: '80vh'
+    });
+  }
+
   getOverallStatusClass(): string {
     if (this.metrics.agents.length === 0) {
       return 'status-red';
@@ -57,9 +72,6 @@ export class AgentsPanelComponent implements AfterViewInit {
     }
   }
 
-  /**
-   * Get the overall status icon
-   */
   getOverallStatusIcon(): string {
     if (this.metrics.agents.length === 0) {
       return 'error';
@@ -77,9 +89,6 @@ export class AgentsPanelComponent implements AfterViewInit {
     }
   }
 
-  /**
-   * Get the overall status text
-   */
   getOverallStatusText(): string {
     if (this.metrics.agents.length === 0) {
       return 'Not Available';

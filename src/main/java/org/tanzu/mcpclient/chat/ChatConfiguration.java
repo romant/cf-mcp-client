@@ -78,11 +78,11 @@ public class ChatConfiguration {
             String serviceName = agentServices.get(i);
             String serviceUrl = allMcpServiceURLs.get(i);
 
-            boolean isHealthy = testMcpServerHealth(serviceName, serviceUrl);
-            agentsWithHealth.add(new Agent(serviceName, isHealthy));
+            Agent agent = testMcpServerHealthAndGetTools(serviceName, serviceUrl);
+            agentsWithHealth.add(agent);
 
             // Only add healthy servers to the list used by ChatService
-            if (isHealthy) {
+            if (agent.healthy()) {
                 healthyMcpServiceURLs.add(serviceUrl);
             }
         }
@@ -103,10 +103,12 @@ public class ChatConfiguration {
     }
 
     /**
-     * Test the health of a single MCP server by attempting to initialize it.
+     * Test the health of a single MCP server by attempting to initialize it and get its tools.
      */
-    private boolean testMcpServerHealth(String serviceName, String serviceUrl) {
+    private Agent testMcpServerHealthAndGetTools(String serviceName, String serviceUrl) {
         logger.debug("Testing health of MCP server: {} at {}", serviceName, serviceUrl);
+
+        List<Agent.Tool> tools = new ArrayList<>();
 
         try {
             HttpClient.Builder clientBuilder = HttpClient.newBuilder()
@@ -125,17 +127,32 @@ public class ChatConfiguration {
             // Attempt to initialize the client
             client.initialize();
 
-            // If we get here, the server is healthy
-            logger.debug("MCP server {} is healthy", serviceName);
+            // If we get here, the server is healthy - now get the tools
+            logger.debug("MCP server {} is healthy, fetching tools...", serviceName);
+
+            try {
+                var listToolsResult = client.listTools();
+                if (listToolsResult != null && listToolsResult.tools() != null) {
+                    tools = listToolsResult.tools().stream()
+                            .map(tool -> new Agent.Tool(tool.name(), tool.description()))
+                            .toList();
+                    logger.debug("Found {} tools for MCP server {}: {}",
+                            tools.size(), serviceName,
+                            tools.stream().map(Agent.Tool::name).toList());
+                }
+            } catch (Exception e) {
+                logger.warn("Failed to get tools for MCP server {} (server is healthy but tools unavailable): {}",
+                        serviceName, e.getMessage());
+            }
 
             // Clean up the test client
             client.closeGracefully();
 
-            return true;
+            return new Agent(serviceName, true, tools);
 
         } catch (Exception e) {
             logger.warn("MCP server {} at {} is unhealthy: {}", serviceName, serviceUrl, e.getMessage());
-            return false;
+            return new Agent(serviceName, false, List.of());
         }
     }
 }

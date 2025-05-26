@@ -81,9 +81,15 @@ export class AppComponent {
   }
 }
 
+export interface Tool {
+  name: string;
+  description: string;
+}
+
 export interface Agent {
   name: string;
   healthy: boolean;
+  tools: Tool[];
 }
 
 export interface PlatformMetrics {

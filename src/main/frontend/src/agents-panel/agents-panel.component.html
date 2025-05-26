@@ -27,11 +27,17 @@
       <h3>Available Agents</h3>
       <mat-list>
         <mat-list-item *ngFor="let agent of metrics.agents">
-          <mat-icon matListItemIcon [ngClass]="{'status-red': !agent.healthy, 'status-green': agent.healthy}">
-            {{ agent.healthy ? 'smart_toy' : 'close' }}
-          </mat-icon>
+          <button mat-icon-button matListItemIcon
+                  [ngClass]="{'status-red': !agent.healthy, 'status-green': agent.healthy}"
+                  [disabled]="!agent.healthy"
+                  (click)="showAgentTools(agent)"
+                  [matTooltip]="agent.healthy ? 'Click to view tools' : 'Agent is unhealthy'">
+            <mat-icon>{{ agent.healthy ? 'info' : 'close' }}</mat-icon>
+          </button>
           <div matListItemTitle>{{ agent.name }}</div>
-          <div matListItemLine>{{ agent.healthy ? 'Healthy' : 'Unhealthy' }}</div>
+          <div matListItemLine>
+            {{ agent.healthy ? (agent.tools.length + ' tools available') : 'Unhealthy' }}
+          </div>
         </mat-list-item>
       </mat-list>
     </div>
