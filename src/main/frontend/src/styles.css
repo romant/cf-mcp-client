@@ -2,3 +2,17 @@
 
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+/* Material Dialog overrides to prevent horizontal scrolling */
+.mat-mdc-dialog-container {
+  overflow-x: hidden !important;
+}
+
+.mat-mdc-dialog-surface {
+  overflow-x: hidden !important;
+}
+
+/* Custom dialog container for tools modal */
+.custom-dialog-container .mat-mdc-dialog-surface {
+  overflow-x: hidden !important;
+}

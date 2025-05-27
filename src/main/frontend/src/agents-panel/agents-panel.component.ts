@@ -61,16 +61,17 @@ export class AgentsPanelComponent implements AfterViewInit {
 
   showAgentTools(agent: Agent): void {
     if (!agent.healthy) {
-      return; // Don't show modal for unhealthy agents
+      return;
     }
 
     this.dialog.open(ToolsModalComponent, {
       data: { agent },
-      width: '600px',
-      maxHeight: '80vh'
+      width: '90vw', // Responsive width
+      maxWidth: '600px', // Maximum width constraint
+      maxHeight: '80vh',
+      panelClass: 'custom-dialog-container'
     });
   }
-
   getOverallStatusClass(): string {
     if (this.metrics.agents.length === 0) {
       return 'status-red';
