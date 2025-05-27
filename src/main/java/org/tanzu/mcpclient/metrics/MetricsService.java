@@ -15,14 +15,14 @@ public class MetricsService {
     private static final Logger logger = LoggerFactory.getLogger(MetricsService.class);
 
     private String chatModel = "";
-    private List<String> agentServices = List.of();
+    private List<Agent> agentsWithHealth = List.of();
     private String embeddingModel = "";
     private String vectorStoreName = "";
 
     @EventListener
     public void handleChatConfigurationEvent(ChatConfigurationEvent event) {
         this.chatModel = event.getChatModel() != null ? event.getChatModel() : "";
-        this.agentServices = event.getAgentServices() != null ? event.getAgentServices() : List.of();
+        this.agentsWithHealth = event.getAgentsWithHealth() != null ? event.getAgentsWithHealth() : List.of();
     }
 
     @EventListener
@@ -39,7 +39,7 @@ public class MetricsService {
                 this.chatModel,
                 this.embeddingModel,
                 this.vectorStoreName,
-                this.agentServices.toArray(new String[0])
+                this.agentsWithHealth.toArray(new Agent[0])
         );
     }
 
@@ -48,6 +48,6 @@ public class MetricsService {
             String chatModel,
             String embeddingModel,
             String vectorStoreName,
-            String[] agents
+            Agent[] agents
     ) {}
 }

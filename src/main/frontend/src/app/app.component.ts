@@ -81,10 +81,21 @@ export class AppComponent {
   }
 }
 
+export interface Tool {
+  name: string;
+  description: string;
+}
+
+export interface Agent {
+  name: string;
+  healthy: boolean;
+  tools: Tool[];
+}
+
 export interface PlatformMetrics {
   conversationId: string;
   chatModel: string;
   embeddingModel: string;
   vectorStoreName: string;
-  agents: string[];
+  agents: Agent[];
 }
