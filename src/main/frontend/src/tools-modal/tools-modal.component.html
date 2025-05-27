@@ -1,0 +1,30 @@
+<div class="tools-modal">
+  <div class="modal-header">
+    <h2 mat-dialog-title>{{ data.agent.name }} - Available Tools</h2>
+    <button mat-icon-button (click)="onClose()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="modal-content">
+    <div *ngIf="data.agent.tools.length === 0" class="no-tools">
+      <mat-icon class="no-tools-icon">info</mat-icon>
+      <p>This agent doesn't expose any tools.</p>
+    </div>
+
+    <div *ngIf="data.agent.tools.length > 0" class="tools-list">
+      <mat-card *ngFor="let tool of data.agent.tools" class="tool-card">
+        <mat-card-header>
+          <mat-card-title class="tool-name">{{ tool.name }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="tool-description">{{ tool.description || 'No description available' }}</p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onClose()">Close</button>
+  </mat-dialog-actions>
+</div>

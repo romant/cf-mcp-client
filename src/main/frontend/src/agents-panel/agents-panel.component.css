@@ -89,6 +89,10 @@ mat-sidenav {
   color: #F44336;
 }
 
+.status-orange {
+  color: #FF9800;
+}
+
 .status-text {
   font-size: 14px;
 }
@@ -114,4 +118,18 @@ mat-sidenav {
 /* Hide the content area without disabling its functions */
 mat-sidenav-content {
   background: transparent;
+}
+
+/* Fix for button alignment in list items */
+.agents-list mat-list-item {
+  position: relative;
+}
+
+/* Override matListItemIcon positioning for buttons */
+.agents-list mat-list-item button[matListItemIcon] {
+  position: static !important;
+  margin-right: 16px !important;
+  transform: none !important;
+  top: auto !important;
+  left: auto !important;
 }
