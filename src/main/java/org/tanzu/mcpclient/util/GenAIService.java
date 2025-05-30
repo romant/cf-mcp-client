@@ -19,7 +19,7 @@ public class GenAIService {
     private static final Logger logger = LoggerFactory.getLogger(GenAIService.class);
 
     // Constants
-    public static final String GENAI_LABEL = "genai";
+    public static final String GENAI = "genai";
     public static final String MODEL_CAPABILITIES = "model_capabilities";
     public static final String MODEL_NAME = "model_name";
     public static final String EMBEDDING_CAPABILITY = "embedding";
@@ -34,7 +34,9 @@ public class GenAIService {
 
     public boolean isEmbeddingModelAvailable() {
         try {
-            return cfEnv.findServicesByLabel(GENAI_LABEL).stream()
+            return cfEnv.findAllServices().stream()
+                    .filter(service -> service.existsByTagIgnoreCase(GENAI) ||
+                            service.existsByLabelStartsWith(GENAI))
                     .anyMatch(service -> hasCapability(service, EMBEDDING_CAPABILITY));
         } catch (Exception e) {
             logger.warn("Error checking for embedding model availability: {}", e.getMessage());
@@ -44,7 +46,9 @@ public class GenAIService {
 
     public String getEmbeddingModelName() {
         try {
-            return cfEnv.findServicesByLabel(GENAI_LABEL).stream()
+            return cfEnv.findAllServices().stream()
+                    .filter(service -> service.existsByTagIgnoreCase(GENAI) ||
+                            service.existsByLabelStartsWith(GENAI))
                     .filter(service -> hasCapability(service, EMBEDDING_CAPABILITY))
                     .findFirst()
                     .map(this::getModelName)
@@ -57,7 +61,9 @@ public class GenAIService {
 
     public String getChatModelName() {
         try {
-            return cfEnv.findServicesByLabel(GENAI_LABEL).stream()
+            return cfEnv.findAllServices().stream()
+                    .filter(service -> service.existsByTagIgnoreCase(GENAI) ||
+                            service.existsByLabelStartsWith(GENAI))
                     .filter(service -> hasCapability(service, CHAT_CAPABILITY))
                     .findFirst()
                     .map(this::getModelName)
