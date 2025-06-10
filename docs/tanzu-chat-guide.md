@@ -195,7 +195,7 @@ The AI will now answer based on the document content, providing accurate informa
 
 ## Extending Capabilities with MCP (Model Context Protocol)
 
-While LLMs are great at generating text, they can't naturally interact with external systems or access real-time data. MCP solves this by giving AI models the ability to use tools—like giving them hands to interact with the world. This opens up possibilities like checking current data, querying databases, or calling APIs.
+While LLMs are great at generating text, they can't naturally interact with external systems or access real-time data. MCP solves this by giving AI models the ability to use tools, invoking software functions in real time. This opens up possibilities like checking current data, querying databases, or calling APIs.
 
 ### Step 9: See the Limitation, Then Fix It
 
