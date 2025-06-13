@@ -4,6 +4,7 @@ import { ChatPanelComponent } from '../chat-panel/chat-panel.component';
 import { MemoryPanelComponent } from '../memory-panel/memory-panel.component';
 import { DocumentPanelComponent } from '../document-panel/document-panel.component';
 import { AgentsPanelComponent } from '../agents-panel/agents-panel.component';
+import { PromptsPanelComponent } from '../prompts-panel/prompts-panel.component';
 import { ChatboxComponent } from '../chatbox/chatbox.component';
 import { HttpClient } from '@angular/common/http';
 import { DOCUMENT } from '@angular/common';
@@ -13,7 +14,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [MatToolbar, ChatPanelComponent, MemoryPanelComponent, DocumentPanelComponent, AgentsPanelComponent, ChatboxComponent],
+  imports: [MatToolbar, ChatPanelComponent, MemoryPanelComponent, DocumentPanelComponent, AgentsPanelComponent, PromptsPanelComponent, ChatboxComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -28,7 +29,12 @@ export class AppComponent {
     chatModel: '',
     embeddingModel: '',
     vectorStoreName: '',
-    agents: []
+    agents: [],
+    prompts: {
+      totalPrompts: 0,
+      serversWithPrompts: 0,
+      available: false
+    }
   };
 
   constructor(private httpClient: HttpClient, @Inject(DOCUMENT) private document: Document) {
@@ -75,7 +81,12 @@ export class AppComponent {
             chatModel: '',
             embeddingModel: '',
             vectorStoreName: '',
-            agents: []
+            agents: [],
+            prompts: {
+              totalPrompts: 0,
+              serversWithPrompts: 0,
+              available: false
+            }
           };        }
       });
   }
@@ -92,10 +103,17 @@ export interface Agent {
   tools: Tool[];
 }
 
+export interface PromptMetrics {
+  totalPrompts: number;
+  serversWithPrompts: number;
+  available: boolean;
+}
+
 export interface PlatformMetrics {
   conversationId: string;
   chatModel: string;
   embeddingModel: string;
   vectorStoreName: string;
   agents: Agent[];
+  prompts: PromptMetrics;
 }

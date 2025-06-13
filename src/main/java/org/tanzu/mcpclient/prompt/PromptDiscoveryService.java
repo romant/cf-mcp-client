@@ -1,6 +1,7 @@
 package org.tanzu.mcpclient.prompt;
 
 import io.modelcontextprotocol.client.McpSyncClient;
+import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,9 @@ import java.util.stream.Collectors;
  * <p>The service listens for ChatConfigurationEvent to ensure MCP servers are available
  * before attempting prompt discovery. It handles multi-server environments by namespacing
  * prompts with their server IDs to prevent conflicts.</p>
+ *
+ * <p>Not all MCP servers support prompts, so this service gracefully handles servers
+ * that only provide tools without prompts support.</p>
  *
  * @author AI Assistant
  */
@@ -61,22 +65,34 @@ public class PromptDiscoveryService {
         promptsByServer.clear();
         promptsById.clear();
 
+        int serversWithPrompts = 0;
+        int serversWithoutPrompts = 0;
+
         for (String mcpUrl : mcpServiceURLs) {
             try {
-                discoverPromptsFromServer(mcpUrl);
+                boolean hasPrompts = discoverPromptsFromServer(mcpUrl);
+                if (hasPrompts) {
+                    serversWithPrompts++;
+                } else {
+                    serversWithoutPrompts++;
+                }
             } catch (Exception e) {
                 logger.warn("Failed to discover prompts from server {}: {}", mcpUrl, e.getMessage());
+                serversWithoutPrompts++;
             }
         }
 
-        logger.info("Prompt discovery completed. Total prompts: {}, Servers with prompts: {}",
-                promptsById.size(), promptsByServer.size());
+        logger.info("Prompt discovery completed. Total prompts: {}, Servers with prompts: {}, Servers without prompts: {}",
+                promptsById.size(), serversWithPrompts, serversWithoutPrompts);
     }
 
     /**
      * Discovers prompts from a single MCP server.
+     *
+     * @param mcpUrl The MCP server URL
+     * @return true if the server has prompts, false if it doesn't support prompts
      */
-    private void discoverPromptsFromServer(String mcpUrl) {
+    private boolean discoverPromptsFromServer(String mcpUrl) {
         String serverId = generateServerId(mcpUrl);
 
         try (var mcpClient = createMcpClient(mcpUrl)) {
@@ -98,10 +114,24 @@ public class PromptDiscoveryService {
 
                 logger.debug("Discovered {} prompts from server {} ({})",
                         serverPrompts.size(), serverId, mcpUrl);
+                return true;
+            } else {
+                logger.debug("Server {} ({}) returned no prompts", serverId, mcpUrl);
+                return false;
+            }
+        } catch (McpError e) {
+            // Check if this is a "method not found" error for prompts/list
+            if (e.getMessage() != null && e.getMessage().contains("Method not found: prompts/list")) {
+                logger.debug("Server {} ({}) does not support prompts (tools-only server)", serverId, mcpUrl);
+                return false;
+            } else {
+                // Re-throw other MCP errors
+                throw e;
             }
         } catch (Exception e) {
             logger.error("Error discovering prompts from server {} ({}): {}",
                     serverId, mcpUrl, e.getMessage(), e);
+            throw e;
         }
     }
 

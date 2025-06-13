@@ -22,11 +22,12 @@ import java.util.Optional;
  *   <li>POST /prompts/resolve - Resolve a prompt with arguments</li>
  * </ul>
  *
+ * <p>Note: CORS is handled by the global WebConfiguration, no need for @CrossOrigin here.</p>
+ *
  * @author AI Assistant
  */
 @RestController
 @RequestMapping("/prompts")
-@CrossOrigin(origins = "*")
 public class PromptController {
 
     private static final Logger logger = LoggerFactory.getLogger(PromptController.class);
