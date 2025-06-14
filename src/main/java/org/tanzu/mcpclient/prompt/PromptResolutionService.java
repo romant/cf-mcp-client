@@ -17,8 +17,6 @@ import java.util.stream.Collectors;
  *
  * <p>The service maintains connections to MCP servers as needed and handles
  * prompt resolution requests with proper error handling and validation.</p>
- *
- * @author AI Assistant
  */
 @Service
 public class PromptResolutionService {
@@ -40,8 +38,6 @@ public class PromptResolutionService {
     /**
      * Resolves a prompt with the provided arguments.
      *
-     * @param request The prompt resolution request containing prompt ID and arguments
-     * @return The resolved prompt content
      * @throws PromptResolutionException if the prompt cannot be resolved
      */
     public ResolvedPrompt resolvePrompt(PromptResolutionRequest request) {

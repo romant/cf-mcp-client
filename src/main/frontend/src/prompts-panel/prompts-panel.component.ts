@@ -115,6 +115,17 @@ export class PromptsPanelComponent implements AfterViewInit {
   }
 
   /**
+   * Get the display name for a server (server name if available, otherwise server ID)
+   */
+  getServerDisplayName(serverId: string): string {
+    const prompts = this.getPromptsForServer(serverId);
+    if (prompts.length > 0 && prompts[0].serverName) {
+      return prompts[0].serverName;
+    }
+    return serverId;
+  }
+
+  /**
    * Get the count of required arguments for a prompt
    */
   getRequiredArgCount(prompt: McpPrompt): number {

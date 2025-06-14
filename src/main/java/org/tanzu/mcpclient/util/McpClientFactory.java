@@ -14,8 +14,6 @@ import java.time.Duration;
  * Utility factory for creating MCP clients with consistent configuration.
  * This factory centralizes the MCP client creation logic to ensure
  * all parts of the application use the same client configuration.
- *
- * @author AI Assistant
  */
 @Component
 public class McpClientFactory {
@@ -29,9 +27,6 @@ public class McpClientFactory {
     /**
      * Creates a new MCP synchronous client for the specified server URL.
      * The client is configured with appropriate timeouts and SSL context.
-     *
-     * @param serverUrl The URL of the MCP server to connect to
-     * @return A configured McpSyncClient instance
      */
     public McpSyncClient createMcpSyncClient(String serverUrl) {
         HttpClient.Builder clientBuilder = createHttpClientBuilder();
@@ -58,10 +53,6 @@ public class McpClientFactory {
     /**
      * Static method for creating MCP clients when dependency injection isn't available.
      * This is useful for testing or special cases where the factory isn't available.
-     *
-     * @param serverUrl The URL of the MCP server
-     * @param sslContext The SSL context to use
-     * @return A configured McpSyncClient instance
      */
     public static McpSyncClient createMcpSyncClient(String serverUrl, SSLContext sslContext) {
         HttpClient.Builder clientBuilder = HttpClient.newBuilder()

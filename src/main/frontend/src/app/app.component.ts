@@ -102,6 +102,7 @@ export interface Tool {
 
 export interface Agent {
   name: string;
+  serverName: string;
   healthy: boolean;
   tools: Tool[];
 }
@@ -116,6 +117,7 @@ export interface PromptArgument {
 
 export interface McpPrompt {
   serverId: string;
+  serverName: string;
   name: string;
   description: string;
   arguments: PromptArgument[];

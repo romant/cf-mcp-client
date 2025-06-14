@@ -23,11 +23,6 @@ import java.util.stream.Collectors;
  * <p>The service listens for ChatConfigurationEvent to ensure MCP servers are available
  * before attempting prompt discovery. It handles multi-server environments by namespacing
  * prompts with their server IDs to prevent conflicts.</p>
- *
- * <p>Not all MCP servers support prompts, so this service gracefully handles servers
- * that only provide tools without prompts support.</p>
- *
- * @author AI Assistant
  */
 @Service
 public class PromptDiscoveryService {
@@ -36,12 +31,16 @@ public class PromptDiscoveryService {
 
     private final List<String> mcpServiceURLs;
     private final McpClientFactory mcpClientFactory;
+    private final Map<String, String> serverNamesByUrl;
     private final Map<String, List<McpPrompt>> promptsByServer = new ConcurrentHashMap<>();
     private final Map<String, McpPrompt> promptsById = new ConcurrentHashMap<>();
 
-    public PromptDiscoveryService(List<String> mcpServiceURLs, McpClientFactory mcpClientFactory) {
+    public PromptDiscoveryService(List<String> mcpServiceURLs,
+                                  McpClientFactory mcpClientFactory,
+                                  Map<String, String> serverNamesByUrl) {
         this.mcpServiceURLs = mcpServiceURLs;
         this.mcpClientFactory = mcpClientFactory;
+        this.serverNamesByUrl = serverNamesByUrl;
     }
 
     /**
@@ -94,14 +93,25 @@ public class PromptDiscoveryService {
      */
     private boolean discoverPromptsFromServer(String mcpUrl) {
         String serverId = generateServerId(mcpUrl);
+        String initialServerName = getServerDisplayName(mcpUrl, serverId);
 
         try (var mcpClient = createMcpClient(mcpUrl)) {
-            mcpClient.initialize();
+            var initResult = mcpClient.initialize();
+
+            // Get the final server name to use (effectively final for lambda expressions)
+            final String finalServerName;
+            if (initResult != null && initResult.serverInfo() != null && initResult.serverInfo().name() != null) {
+                finalServerName = initResult.serverInfo().name();
+                serverNamesByUrl.put(mcpUrl, finalServerName);
+                logger.debug("Updated server name '{}' for MCP server at {} during prompt discovery", finalServerName, mcpUrl);
+            } else {
+                finalServerName = initialServerName;
+            }
 
             var listPromptsResult = mcpClient.listPrompts();
-            if (listPromptsResult != null && listPromptsResult.prompts() != null) {
+            if (listPromptsResult != null && listPromptsResult.prompts() != null && !listPromptsResult.prompts().isEmpty()) {
                 List<McpPrompt> serverPrompts = listPromptsResult.prompts().stream()
-                        .map(prompt -> convertToMcpPrompt(serverId, prompt))
+                        .map(prompt -> convertToMcpPrompt(serverId, finalServerName, prompt))
                         .collect(Collectors.toList());
 
                 promptsByServer.put(serverId, serverPrompts);
@@ -112,27 +122,35 @@ public class PromptDiscoveryService {
                     promptsById.put(promptId, prompt);
                 });
 
-                logger.debug("Discovered {} prompts from server {} ({})",
-                        serverPrompts.size(), serverId, mcpUrl);
+                logger.debug("Discovered {} prompts from server '{}' ({})",
+                        serverPrompts.size(), finalServerName, mcpUrl);
                 return true;
             } else {
-                logger.debug("Server {} ({}) returned no prompts", serverId, mcpUrl);
+                logger.debug("Server '{}' ({}) returned no prompts", finalServerName, mcpUrl);
                 return false;
             }
         } catch (McpError e) {
             // Check if this is a "method not found" error for prompts/list
             if (e.getMessage() != null && e.getMessage().contains("Method not found: prompts/list")) {
-                logger.debug("Server {} ({}) does not support prompts (tools-only server)", serverId, mcpUrl);
+                logger.debug("Server '{}' ({}) does not support prompts (tools-only server)", initialServerName, mcpUrl);
                 return false;
             } else {
                 // Re-throw other MCP errors
                 throw e;
             }
         } catch (Exception e) {
-            logger.error("Error discovering prompts from server {} ({}): {}",
-                    serverId, mcpUrl, e.getMessage(), e);
+            logger.error("Error discovering prompts from server '{}' ({}): {}",
+                    initialServerName, mcpUrl, e.getMessage(), e);
             throw e;
         }
+    }
+
+    /**
+     * Gets the display name for a server, preferring the stored server name.
+     */
+    private String getServerDisplayName(String mcpUrl, String serverId) {
+        String serverName = serverNamesByUrl.get(mcpUrl);
+        return serverName != null && !serverName.trim().isEmpty() ? serverName : serverId;
     }
 
     /**
@@ -160,7 +178,7 @@ public class PromptDiscoveryService {
     /**
      * Converts an MCP schema prompt to our internal McpPrompt representation.
      */
-    private McpPrompt convertToMcpPrompt(String serverId, McpSchema.Prompt prompt) {
+    private McpPrompt convertToMcpPrompt(String serverId, String serverName, McpSchema.Prompt prompt) {
         List<PromptArgument> arguments = Optional.ofNullable(prompt.arguments())
                 .orElse(Collections.emptyList())
                 .stream()
@@ -169,6 +187,7 @@ public class PromptDiscoveryService {
 
         return new McpPrompt(
                 serverId,
+                serverName,
                 prompt.name(),
                 prompt.description(),
                 arguments

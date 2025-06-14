@@ -19,6 +19,8 @@ import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Configuration
 public class ChatConfiguration {
@@ -32,6 +34,9 @@ public class ChatConfiguration {
     private final List<String> healthyMcpServiceURLs;
     private final ApplicationEventPublisher eventPublisher;
     private final SSLContext sslContext;
+
+    // Map to store server names by URL for use by other services
+    private final Map<String, String> serverNamesByUrl = new ConcurrentHashMap<>();
 
     public ChatConfiguration(GenAIService genAIService, ApplicationEventPublisher eventPublisher, SSLContext sslContext) {
         this.chatModel = genAIService.getChatModelName();
@@ -62,12 +67,18 @@ public class ChatConfiguration {
         return healthyMcpServiceURLs; // Only return healthy MCP service URLs
     }
 
+    @Bean
+    public Map<String, String> serverNamesByUrl() {
+        return serverNamesByUrl;
+    }
+
     /**
      * Test the health of all configured MCP servers by attempting to initialize them.
      */
     private void testMcpServerHealth() {
         agentsWithHealth.clear();
         healthyMcpServiceURLs.clear();
+        serverNamesByUrl.clear();
 
         if (agentServices.isEmpty() || allMcpServiceURLs.isEmpty()) {
             logger.debug("No MCP services configured for health checking");
@@ -109,6 +120,7 @@ public class ChatConfiguration {
         logger.debug("Testing health of MCP server: {} at {}", serviceName, serviceUrl);
 
         List<Agent.Tool> tools = new ArrayList<>();
+        String serverName = serviceName; // Default to service name
 
         try {
             HttpClient.Builder clientBuilder = HttpClient.newBuilder()
@@ -125,7 +137,18 @@ public class ChatConfiguration {
                     .build();
 
             // Attempt to initialize the client
-            client.initialize();
+            var initResult = client.initialize();
+
+            // Get server name from initialization result
+            if (initResult != null && initResult.serverInfo() != null && initResult.serverInfo().name() != null) {
+                serverName = initResult.serverInfo().name();
+                logger.debug("Retrieved server name '{}' for MCP server at {}", serverName, serviceUrl);
+            } else {
+                logger.debug("No server name available for MCP server at {}, using service name '{}'", serviceUrl, serviceName);
+            }
+
+            // Store the server name for use by other services
+            serverNamesByUrl.put(serviceUrl, serverName);
 
             // If we get here, the server is healthy - now get the tools
             logger.debug("MCP server {} is healthy, fetching tools...", serviceName);
@@ -148,11 +171,11 @@ public class ChatConfiguration {
             // Clean up the test client
             client.closeGracefully();
 
-            return new Agent(serviceName, true, tools);
+            return new Agent(serviceName, serverName, true, tools);
 
         } catch (Exception e) {
             logger.warn("MCP server {} at {} is unhealthy: {}", serviceName, serviceUrl, e.getMessage());
-            return new Agent(serviceName, false, List.of());
+            return new Agent(serviceName, serverName, false, List.of());
         }
     }
 }

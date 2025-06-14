@@ -46,7 +46,7 @@
           <mat-expansion-panel-header>
             <mat-panel-title>
               <mat-icon>dns</mat-icon>
-              <span class="server-name">{{ serverId }}</span>
+              <span class="server-name">{{ getServerDisplayName(serverId) }}</span>
             </mat-panel-title>
             <mat-panel-description>
               <mat-chip-set>
@@ -64,17 +64,12 @@
                 <mat-icon matListItemIcon>psychology</mat-icon>
                 <div matListItemTitle class="prompt-title">
                   {{ prompt.name }}
-                  <mat-chip-set *ngIf="hasArguments(prompt)" class="argument-chips">
-                    <mat-chip class="required-args" *ngIf="getRequiredArgCount(prompt) > 0">
-                      {{ getRequiredArgCount(prompt) }} required
-                    </mat-chip>
-                    <mat-chip class="total-args" *ngIf="getTotalArgCount(prompt) > getRequiredArgCount(prompt)">
-                      {{ getTotalArgCount(prompt) - getRequiredArgCount(prompt) }} optional
-                    </mat-chip>
-                  </mat-chip-set>
                 </div>
                 <div matListItemLine class="prompt-description">
                   {{ prompt.description || 'No description available' }}
+                  <span *ngIf="hasArguments(prompt)" class="argument-info">
+                    • {{ getArgumentSummary(prompt) }}
+                  </span>
                 </div>
                 <button
                   matListItemMeta
