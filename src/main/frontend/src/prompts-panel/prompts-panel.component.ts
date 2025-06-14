@@ -1,4 +1,4 @@
-import { Component, Input, ViewChild, AfterViewInit, OnInit } from '@angular/core';
+import { Component, Input, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatButtonModule } from '@angular/material/button';
@@ -8,9 +8,8 @@ import { MatListModule } from '@angular/material/list';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatChipsModule } from '@angular/material/chips';
-import { PlatformMetrics } from '../app/app.component';
+import { PlatformMetrics, McpPrompt } from '../app/app.component';
 import { SidenavService } from '../services/sidenav.service';
-import { PromptService, McpPrompt } from '../services/prompt.service';
 
 @Component({
   selector: 'app-prompts-panel',
@@ -29,26 +28,12 @@ import { PromptService, McpPrompt } from '../services/prompt.service';
   templateUrl: './prompts-panel.component.html',
   styleUrl: './prompts-panel.component.css'
 })
-export class PromptsPanelComponent implements AfterViewInit, OnInit {
+export class PromptsPanelComponent implements AfterViewInit {
   @Input() metrics!: PlatformMetrics;
 
   @ViewChild('sidenav') sidenav!: MatSidenav;
 
-  // Component state
-  promptsByServer: { [serverId: string]: McpPrompt[] } = {};
-  serverIds: string[] = [];
-  totalPrompts = 0;
-  loading = true;
-  error: string | null = null;
-
-  constructor(
-    private sidenavService: SidenavService,
-    private promptService: PromptService
-  ) {}
-
-  ngOnInit(): void {
-    this.loadPrompts();
-  }
+  constructor(private sidenavService: SidenavService) {}
 
   ngAfterViewInit(): void {
     this.sidenavService.registerSidenav('prompts', this.sidenav);
@@ -59,36 +44,10 @@ export class PromptsPanelComponent implements AfterViewInit, OnInit {
   }
 
   /**
-   * Load prompts from the backend
-   */
-  loadPrompts(): void {
-    this.loading = true;
-    this.error = null;
-
-    this.promptService.getPromptsByServer().subscribe({
-      next: (data) => {
-        this.promptsByServer = data;
-        this.serverIds = Object.keys(data).sort();
-        this.totalPrompts = Object.values(data)
-          .reduce((total, prompts) => total + prompts.length, 0);
-        this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error loading prompts:', error);
-        this.error = 'Failed to load prompts';
-        this.loading = false;
-        this.promptsByServer = {};
-        this.serverIds = [];
-        this.totalPrompts = 0;
-      }
-    });
-  }
-
-  /**
    * Get the overall status class for prompts
    */
   getOverallStatusClass(): string {
-    if (this.metrics?.prompts?.available) {
+    if (this.metrics && this.metrics.prompts && this.metrics.prompts.available) {
       return 'status-green';
     }
     return 'status-red';
@@ -98,7 +57,7 @@ export class PromptsPanelComponent implements AfterViewInit, OnInit {
    * Get the overall status icon for prompts
    */
   getOverallStatusIcon(): string {
-    if (this.metrics?.prompts?.available) {
+    if (this.metrics && this.metrics.prompts && this.metrics.prompts.available) {
       return 'check_circle';
     }
     return 'error';
@@ -108,17 +67,51 @@ export class PromptsPanelComponent implements AfterViewInit, OnInit {
    * Get the overall status text for prompts
    */
   getOverallStatusText(): string {
-    if (this.metrics?.prompts?.available) {
-      return `${this.totalPrompts} Available`;
+    if (this.metrics && this.metrics.prompts && this.metrics.prompts.available && this.metrics.prompts.totalPrompts > 0) {
+      return `${this.metrics.prompts.totalPrompts} Available`;
     }
     return 'Not Available';
+  }
+
+  /**
+   * Check if we should show empty state
+   */
+  shouldShowEmptyState(): boolean {
+    return !this.metrics || !this.metrics.prompts || !this.metrics.prompts.available || this.metrics.prompts.totalPrompts === 0;
+  }
+
+  /**
+   * Check if we have prompts to display
+   */
+  hasPrompts(): boolean {
+    return this.metrics && this.metrics.prompts && this.metrics.prompts.available && this.metrics.prompts.totalPrompts > 0;
+  }
+
+  /**
+   * Get total prompts count
+   */
+  getTotalPrompts(): number {
+    return this.metrics && this.metrics.prompts ? this.metrics.prompts.totalPrompts : 0;
+  }
+
+  /**
+   * Get server IDs that have prompts
+   */
+  getServerIds(): string[] {
+    if (!this.metrics || !this.metrics.prompts || !this.metrics.prompts.promptsByServer) {
+      return [];
+    }
+    return Object.keys(this.metrics.prompts.promptsByServer).sort();
   }
 
   /**
    * Get prompts for a specific server
    */
   getPromptsForServer(serverId: string): McpPrompt[] {
-    return this.promptsByServer[serverId] || [];
+    if (!this.metrics || !this.metrics.prompts || !this.metrics.prompts.promptsByServer) {
+      return [];
+    }
+    return this.metrics.prompts.promptsByServer[serverId] || [];
   }
 
   /**
@@ -152,12 +145,5 @@ export class PromptsPanelComponent implements AfterViewInit, OnInit {
     console.log('Selected prompt:', prompt);
     // TODO: Integrate with chat interface
     // This could emit an event or call a service to handle prompt selection
-  }
-
-  /**
-   * Refresh prompts data
-   */
-  refreshPrompts(): void {
-    this.loadPrompts();
   }
 }

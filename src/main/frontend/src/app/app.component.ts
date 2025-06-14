@@ -33,7 +33,8 @@ export class AppComponent {
     prompts: {
       totalPrompts: 0,
       serversWithPrompts: 0,
-      available: false
+      available: false,
+      promptsByServer: {}
     }
   };
 
@@ -85,9 +86,11 @@ export class AppComponent {
             prompts: {
               totalPrompts: 0,
               serversWithPrompts: 0,
-              available: false
+              available: false,
+              promptsByServer: {}
             }
-          };        }
+          };
+        }
       });
   }
 }
@@ -103,10 +106,26 @@ export interface Agent {
   tools: Tool[];
 }
 
-export interface PromptMetrics {
+export interface PromptArgument {
+  name: string;
+  description: string;
+  required: boolean;
+  defaultValue?: any;
+  schema?: any;
+}
+
+export interface McpPrompt {
+  serverId: string;
+  name: string;
+  description: string;
+  arguments: PromptArgument[];
+}
+
+export interface EnhancedPromptMetrics {
   totalPrompts: number;
   serversWithPrompts: number;
   available: boolean;
+  promptsByServer: { [serverId: string]: McpPrompt[] };
 }
 
 export interface PlatformMetrics {
@@ -115,5 +134,5 @@ export interface PlatformMetrics {
   embeddingModel: string;
   vectorStoreName: string;
   agents: Agent[];
-  prompts: PromptMetrics;
+  prompts: EnhancedPromptMetrics;
 }

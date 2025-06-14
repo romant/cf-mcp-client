@@ -6,9 +6,11 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.tanzu.mcpclient.chat.ChatConfigurationEvent;
 import org.tanzu.mcpclient.document.DocumentConfigurationEvent;
+import org.tanzu.mcpclient.prompt.McpPrompt;
 import org.tanzu.mcpclient.prompt.PromptDiscoveryService;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service that collects and provides platform metrics including models, agents, and prompts.
@@ -46,16 +48,19 @@ public class MetricsService {
     }
 
     /**
-     * Retrieves comprehensive platform metrics including prompt information.
+     * Retrieves comprehensive platform metrics including full prompt data.
      */
     public Metrics getMetrics(String conversationId) {
         logger.debug("Retrieving metrics for conversation: {}", conversationId);
 
-        // Get prompt metrics from the discovery service
-        PromptMetrics promptMetrics = new PromptMetrics(
+        // Get full prompt data from the discovery service
+        Map<String, List<McpPrompt>> promptsByServer = promptDiscoveryService.getPromptsByServer();
+
+        EnhancedPromptMetrics promptMetrics = new EnhancedPromptMetrics(
                 promptDiscoveryService.getPromptCount(),
                 promptDiscoveryService.getServerCount(),
-                promptDiscoveryService.hasPrompts()
+                promptDiscoveryService.hasPrompts(),
+                promptsByServer
         );
 
         return new Metrics(
@@ -69,7 +74,7 @@ public class MetricsService {
     }
 
     /**
-     * Enhanced metrics record that includes prompt information.
+     * Enhanced metrics record that includes full prompt data.
      */
     public record Metrics(
             String conversationId,
@@ -77,15 +82,16 @@ public class MetricsService {
             String embeddingModel,
             String vectorStoreName,
             Agent[] agents,
-            PromptMetrics prompts
+            EnhancedPromptMetrics prompts
     ) {}
 
     /**
-     * Metrics specific to prompt discovery and availability.
+     * Enhanced prompt metrics that include the full prompt data by server.
      */
-    public record PromptMetrics(
+    public record EnhancedPromptMetrics(
             int totalPrompts,
             int serversWithPrompts,
-            boolean available
+            boolean available,
+            Map<String, List<McpPrompt>> promptsByServer
     ) {}
 }

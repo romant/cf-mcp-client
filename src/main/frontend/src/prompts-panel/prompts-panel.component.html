@@ -1,6 +1,6 @@
 <div class="prompts-container">
   <button mat-icon-button class="toggle-button" (click)="toggleSidenav()" matTooltip="Prompts" matTooltipPosition="left">
-    <mat-icon [matBadge]="totalPrompts > 0 ? totalPrompts : null" matBadgeSize="small" matBadgeColor="accent">psychology</mat-icon>
+    <mat-icon [matBadge]="getTotalPrompts() > 0 ? getTotalPrompts() : null" matBadgeSize="small" matBadgeColor="accent">psychology</mat-icon>
   </button>
 </div>
 
@@ -9,9 +9,6 @@
     <div class="sidenav-header">
       <h2>Prompts</h2>
       <div class="header-actions">
-        <button mat-icon-button (click)="refreshPrompts()" matTooltip="Refresh" [disabled]="loading">
-          <mat-icon>refresh</mat-icon>
-        </button>
         <button mat-icon-button (click)="sidenav.close()">
           <mat-icon>close</mat-icon>
         </button>
@@ -26,7 +23,7 @@
           <span class="status-text">{{ getOverallStatusText() }}</span>
         </span>
       </div>
-      <div class="status-row" *ngIf="metrics.prompts && metrics.prompts.serversWithPrompts > 0">
+      <div class="status-row" *ngIf="metrics && metrics.prompts && metrics.prompts.serversWithPrompts > 0">
         <span class="status-label">Servers:</span>
         <span class="status-indicator status-green">
           <mat-icon>dns</mat-icon>
@@ -35,33 +32,17 @@
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div class="loading-container" *ngIf="loading">
-      <mat-icon class="loading-icon">hourglass_empty</mat-icon>
-      <p>Loading prompts...</p>
-    </div>
-
-    <!-- Error State -->
-    <div class="error-container" *ngIf="error && !loading">
-      <mat-icon class="error-icon">error_outline</mat-icon>
-      <p>{{ error }}</p>
-      <button mat-button color="primary" (click)="refreshPrompts()">
-        <mat-icon>refresh</mat-icon>
-        Retry
-      </button>
-    </div>
-
     <!-- Empty State -->
-    <div class="empty-state" *ngIf="!loading && !error && totalPrompts === 0">
+    <div class="empty-state" *ngIf="shouldShowEmptyState()">
       <mat-icon class="empty-icon">psychology_alt</mat-icon>
       <p>No prompts available</p>
       <small>Connect MCP servers to see available prompts</small>
     </div>
 
     <!-- Prompts List -->
-    <div class="prompts-list" *ngIf="!loading && !error && totalPrompts > 0">
+    <div class="prompts-list" *ngIf="hasPrompts()">
       <mat-accordion multi="true">
-        <mat-expansion-panel *ngFor="let serverId of serverIds" class="server-panel">
+        <mat-expansion-panel *ngFor="let serverId of getServerIds()" class="server-panel">
           <mat-expansion-panel-header>
             <mat-panel-title>
               <mat-icon>dns</mat-icon>
