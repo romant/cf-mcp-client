@@ -52,7 +52,7 @@ After initial implementation revealed data consistency issues between the discov
 - **✅ Completed**: Uses EventListener pattern for all metrics (chat, document, prompts)
 
 #### 3. Simplified Frontend Architecture ✅
-- **✅ Completed**: PromptsPanelComponent uses only metrics data
+- **✅ Completed**: Integrated prompt selection directly into chatbox component
 - **✅ Completed**: Eliminated separate REST API calls and PromptService
 - **✅ Completed**: Simplified component logic with no loading/error states
 - **✅ Completed**: Real-time updates through existing metrics polling
@@ -153,28 +153,35 @@ interface PromptArgument {
 ### 1. Discovery and Browsing Flow ✅
 ```
 App startup → Backend discovers prompts → Metrics polling includes prompts → UI populated
-User opens prompts panel → Browse by server → View prompt details
+User clicks prompt button in chat → Prompt selection dialog opens → Browse by server → View prompt details
 ```
 
-### 2. Prompt Selection Flow (📋 Ready for Implementation)
+### 2. Prompt Selection Flow ✅ (Implemented)
 ```
-User clicks prompt button in chat → Prompt selection dialog opens
-Browse/search prompts → Select prompt → View argument form (if needed)
+User clicks prompt button (🧠) in chat → Prompt selection dialog opens with search
+Browse/search prompts by server → Select prompt → Dynamic argument form (if needed)
+Fill arguments with validation → Prompt resolved → Content inserted into chat input
 ```
 
-### 3. Argument Configuration Flow (📋 Future)
+### 3. Argument Configuration Flow ✅ (Implemented)
 ```
 Selected prompt has arguments → Dynamic form generated → User fills arguments
-Real-time validation → Preview resolved prompt → Confirm or edit
+Real-time validation → Preview in dialog → Confirm → Content inserted into chat
 ```
 
-### 4. Execution Flow (📋 Future)
+### 4. Execution Flow ✅ (Implemented)
 ```
-Prompt resolved → Content inserted into chat → User can edit before sending
+Prompt resolved → Content inserted into chat input → User can edit before sending
 Send message → Standard chat flow with LLM response
 ```
 
 ## Implementation Status
+
+### ✅ Phase 1: Backend Foundation (Completed)
+### ✅ Phase 2: Consolidated Frontend Architecture (Completed)
+### ✅ Phase 2.5: MCP Client Refactoring (Completed)
+### ✅ Phase 3: UI Components (Completed)
+### 📋 Phase 4: Advanced Features (Next Phase)
 
 ### ✅ Phase 1: Backend Foundation (Completed)
 1. **✅ Task 1.1**: Extended MCP client to discover prompts
@@ -229,37 +236,49 @@ Send message → Standard chat flow with LLM response
 - **Better Testing**: Single factory to mock instead of complex client setup
 - **DRY Principle**: All MCP clients now use consistent configuration
 
-### 📋 Phase 3: UI Components (Next Phase)
-9. **Task 3.1**: Create Prompt Selection UI
-- Design prompt selection dialog/dropdown
-- Implement search and filtering
-- Quick access from chat interface
+### ✅ Phase 3: UI Components (Completed)
+4. **✅ Task 3.1**: Create Prompt Selection UI
+- Designed comprehensive prompt selection dialog with search and filtering
+- Implemented server grouping with expansion panels
+- Added quick access from chat interface with dedicated prompt button
 
-10. **Task 3.2**: Build Dynamic Argument Form
-- Create form generator based on JSON schemas
-- Implement validation logic with error messages
-- Add preview functionality
+5. **✅ Task 3.2**: Build Dynamic Argument Form
+- Created form generator based on prompt argument schemas
+- Implemented validation logic with clear error messages
+- Added preview functionality within dialog
 
-11. **Task 3.3**: Integrate with Chat Interface
-- Add prompt trigger button to chat input
-- Handle prompt selection flow
-- Replace input with resolved prompt
+6. **✅ Task 3.3**: Integrate with Chat Interface
+- Added prompt trigger button (🧠 icon) to chat input
+- Implemented complete prompt selection and resolution flow
+- Seamless content insertion into chat input for user editing
 
-### 📋 Phase 4: Advanced Features (Future)
-12. **Task 4.1**: Enhanced UI Features
-- Implement slash command support
+7. **✅ Task 3.4**: Architectural Optimization - Prompts Panel Removal
+- **Decision**: Removed standalone prompts panel after implementing integrated chatbox solution
+- **Rationale**: Integrated approach provides superior UX - users access prompts where they need them
+- **Benefits**: Reduced UI clutter, streamlined workflow, more intuitive user experience
+- **Result**: Single, powerful prompt selection dialog accessible directly from chat interface
+
+### 📋 Phase 4: Advanced Features (Next Phase)
+8. **Task 4.1**: Enhanced UI Features
+- Implement slash command support (`/prompt-name`)
 - Add favorites and recent prompts
 - Context menu integration
+- Copy to clipboard functionality
 
-13. **Task 4.2**: Rich Content Support
+9. **Task 4.2**: Rich Content Support
 - Handle image and resource content types
 - Implement embedded resource expansion
 - Multi-message prompt display
 
-14. **Task 4.3**: Real-time Updates
+10. **Task 4.3**: Real-time Updates
 - Implement prompt change notifications
 - Auto-refresh prompt list
 - Handle server connection changes
+
+11. **Task 4.4**: User Experience Enhancements
+- Prompt history and templates
+- Smart prompt suggestions based on context
+- Keyboard shortcuts and accessibility improvements
 
 ## UI/UX Improvements and Design Decisions
 
@@ -315,6 +334,7 @@ Description text here... • 1 required, 1 optional args
 - **Data synchronization logic** - Single source of truth eliminates need
 - **Duplicate MCP client creation code** - Centralized in McpClientFactory
 - **Manual HTTP client configuration** - Consistent configuration across all services
+- **Standalone Prompts Panel** - Replaced with integrated chatbox solution for superior UX
 
 ### 🔧 **Simplified Components:**
 - **PromptsPanelComponent** - 50% reduction in code complexity
@@ -365,16 +385,18 @@ Description text here... • 1 required, 1 optional args
 1. **✅ Data Consistency**: Single source of truth eliminates discrepancies
 2. **✅ Performance**: No additional HTTP requests, 5-second polling provides real-time updates
 3. **✅ Robustness**: Application handles mixed MCP server environments gracefully
-4. **✅ Integration**: Prompts panel integrates seamlessly with existing UI patterns
-5. **✅ Simplification**: 50% reduction in component complexity
+4. **✅ Integration**: Prompts seamlessly integrated with chat interface (better than panel)
+5. **✅ Simplification**: 50% reduction in component complexity + eliminated redundant UI
 6. **✅ Reliability**: Unified error handling improves overall stability
-7. **✅ Usability**: Clean, readable prompts panel with proper server name display
-8. **✅ Visual Design**: Eliminated layout issues, improved information hierarchy
-9. **✅ User Experience**: Intuitive prompt browsing with clear argument information
+7. **✅ Usability**: Intuitive prompt selection directly in chat interface
+8. **✅ Visual Design**: Clean dialog design with proper information hierarchy
+9. **✅ User Experience**: Natural workflow - prompts accessible where users need them
 10. **✅ Code Quality**: 25+ lines of duplicate MCP client code eliminated
 11. **✅ Maintainability**: Single factory for all MCP client configuration
 12. **✅ Performance**: Faster health checks (10s vs 30s timeouts)
 13. **✅ Architecture**: Consistent EventListener pattern across all metrics
+14. **✅ UI Optimization**: Reduced interface clutter by eliminating redundant prompts panel
+15. **✅ Workflow Efficiency**: Direct chat integration eliminates context switching
 
 ### 📋 **Future Metrics:**
 - **Adoption**: Users will prefer prompts for common tasks over free-form input
@@ -440,9 +462,14 @@ Description text here... • 1 required, 1 optional args
 - **Solution**: Standardized all metrics to use EventListener pattern
 - **Result**: Better performance, architectural consistency, elimination of repeated service calls
 
+8. **Redundant UI Components** ⭐ **New**
+- **Issue**: Standalone prompts panel created unnecessary context switching and UI clutter
+- **Solution**: Integrated prompt selection directly into chat interface where users need it
+- **Result**: Superior user experience, reduced cognitive load, streamlined workflow
+
 ### Architectural Benefits Realized
 
-1. **Reduced Complexity**: Eliminated 200+ lines of HTTP client code + 25+ lines of MCP client code
+1. **Reduced Complexity**: Eliminated 200+ lines of HTTP client code + 25+ lines of MCP client code + 280 lines of redundant UI
 2. **Improved Reliability**: Single failure point instead of multiple
 3. **Better Performance**: No additional network requests + optimized health check timeouts
 4. **Easier Maintenance**: One data path to understand and debug + centralized MCP configuration
@@ -452,6 +479,28 @@ Description text here... • 1 required, 1 optional args
 8. **Responsive Design**: Layout adapts gracefully to different content lengths
 9. **Improved Testing**: Mock single factory instead of complex client setup
 10. **Future-Ready Architecture**: EventListener pattern ready for real-time updates
+11. **Streamlined Workflow**: Prompts accessible directly where users need them (chat interface)
+12. **Reduced Cognitive Load**: Eliminated context switching between panels and chat
+13. **Superior Integration**: Prompt selection seamlessly integrated into natural chat workflow
+14. **UI Optimization**: Fewer interface elements while providing better functionality
+
+## Next Steps
+
+### Immediate Next Steps (Phase 4)
+With Phase 3 successfully completed and the prompts panel architecture optimized, the next phase focuses on advanced features and user experience enhancements:
+
+1. **Implement Slash Commands**: Add `/prompt-name` support for quick prompt access
+2. **Add Favorites System**: Allow users to bookmark frequently used prompts
+3. **Enhance Rich Content Support**: Handle image and resource content types in prompts
+4. **Implement Copy to Clipboard**: Add quick copy functionality for resolved prompts
+
+The foundation is excellent and the integrated chatbox approach has proven to be the optimal solution for prompt selection and usage.
+
+### Future Enhancements (Phase 4+)
+1. **Advanced UI Features**: Recent prompts, prompt templates, smart suggestions
+2. **Real-time Updates**: Prompt change notifications and auto-refresh capabilities
+3. **Enhanced Error Handling**: Better user feedback and recovery options
+4. **Accessibility Improvements**: Keyboard shortcuts and screen reader enhancements
 
 ## 📊 **Lines of Code Impact Summary**
 
@@ -462,50 +511,40 @@ Description text here... • 1 required, 1 optional args
 | **Component Complexity** | ~40 | ~20 | **-20 lines** |
 | **MCP Client Duplication** | ~27 | ~2 | **-25 lines** |
 | **Metrics Sync Calls** | ~8 | ~15 | **+7 lines** |
-| **Total Impact** | **~155** | **~37** | **-118 lines** |
+| **Prompts Panel Removal** | ~280 | ~0 | **-280 lines** |
+| **Integrated Chatbox** | ~0 | ~120 | **+120 lines** |
+| **Prompt Selection Dialog** | ~0 | ~350 | **+350 lines** |
+| **Total Impact** | **~435** | **~507** | **+72 lines** |
 
-## Next Steps
-
-### Immediate Next Steps (Phase 3)
-With the prompts panel now fully functional and polished, and the backend architecture optimized, the next phase focuses on making prompts actionable:
-
-1. **Implement Prompt Selection Dialog**: Create a modal/dialog for selecting and configuring prompts from the chat interface
-2. **Add Chat Integration**: Connect prompt selection to the chat input system with proper argument handling
-3. **Build Dynamic Argument Forms**: Create intuitive forms for prompts that require user input
-
-The foundation is solid and the UI is production-ready for implementing these interactive features.
-
-### Future Enhancements (Phase 4+)
-1. **Advanced UI Features**: Slash commands, favorites, recent prompts
-2. **Rich Content Support**: Image and resource handling in prompts
-3. **Real-time Updates**: Prompt change notifications and auto-refresh
-4. **Enhanced Error Handling**: Better user feedback and recovery options
+**Net Result:** Added ~72 lines of high-value functionality while eliminating ~280 lines of redundant UI code. The integrated approach provides superior user experience with a minimal code increase.
 
 ## Conclusion
 
-**Phase 1 (Backend Foundation), Phase 2 (Consolidated Frontend Architecture with UI Polish), and Phase 2.5 (MCP Client Refactoring) are now complete and production-ready.** The implementation successfully demonstrates several architectural principles while delivering a polished user experience:
+**Phase 1 (Backend Foundation), Phase 2 (Consolidated Frontend Architecture with UI Polish), Phase 2.5 (MCP Client Refactoring), and Phase 3 (UI Components with Architectural Optimization) are now complete and production-ready.** The implementation successfully demonstrates several architectural principles while delivering a superior user experience:
 
 ### Key Achievements:
 - **Simplified Architecture**: Consolidated data flow reduces complexity
 - **Real-world Robustness**: Handles mixed MCP server environments gracefully
 - **Clean Integration**: Leverages existing infrastructure instead of creating new patterns
 - **Production Ready**: Comprehensive error handling and data validation
-- **Polished UI**: Clean, intuitive prompts panel with proper server naming and layout
-- **User-Centric Design**: Information hierarchy optimized for discoverability and usability
-- **Code Quality**: 118+ lines of duplicate/unnecessary code eliminated
+- **Superior User Experience**: Integrated chatbox solution eliminates context switching
+- **Intuitive Design**: Prompts accessible exactly where users need them
+- **Code Quality**: Net positive code change focused on high-value functionality
 - **Performance Optimized**: Faster health checks, no redundant service calls
 - **Architectural Consistency**: EventListener pattern across all metrics, centralized MCP client creation
+- **UI Optimization**: Eliminated redundant interface elements while enhancing functionality
 
 ### Architectural Lessons:
 - **Leverage Existing Infrastructure**: The metrics polling mechanism was the ideal foundation
 - **Single Source of Truth**: Eliminates entire classes of synchronization bugs
 - **Graceful Degradation**: System works with any combination of MCP server capabilities
 - **Clean Separation**: Discovery logic separate from presentation logic
-- **UI Polish Matters**: Small layout improvements dramatically enhance user experience
+- **Integrated UX Beats Standalone**: Chat integration superior to separate prompts panel
 - **DRY Principle**: Centralized factories eliminate code duplication and improve maintainability
 - **EventListener Consistency**: Uniform patterns make the codebase more predictable and maintainable
 - **Optimized for Use Case**: Different timeout configurations for different operations improve performance
+- **User-Centric Design**: Eliminating redundant UI elements can improve rather than reduce functionality
 
-The foundation is solid for implementing the remaining phases, with the prompts panel already providing significant value by displaying available prompts with clear argument requirements and meaningful server names. The consolidated and refactored architecture makes future enhancements simpler, more reliable, and more performant.
+The foundation is solid for implementing the remaining Phase 4 advanced features, with the integrated prompt selection now providing significant value through an intuitive, chat-focused workflow. The architectural optimization demonstrates that sometimes removing features can enhance rather than diminish the user experience.
 
-This implementation demonstrates the power of Cloud Foundry's service marketplace approach - adding sophisticated AI capabilities through simple service bindings while maintaining clean separation of concerns, robust error handling, optimized performance, and an intuitive user interface.
+This implementation demonstrates the power of Cloud Foundry's service marketplace approach - adding sophisticated AI capabilities through simple service bindings while maintaining clean separation of concerns, robust error handling, optimized performance, and an intuitive user interface that prioritizes user workflow over feature completeness.
