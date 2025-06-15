@@ -5,7 +5,7 @@ import io.modelcontextprotocol.spec.McpError;
 import io.modelcontextprotocol.spec.McpSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.tanzu.mcpclient.chat.ChatConfigurationEvent;
@@ -34,13 +34,16 @@ public class PromptDiscoveryService {
     private final Map<String, String> serverNamesByUrl;
     private final Map<String, List<McpPrompt>> promptsByServer = new ConcurrentHashMap<>();
     private final Map<String, McpPrompt> promptsById = new ConcurrentHashMap<>();
+    private final ApplicationEventPublisher eventPublisher;
 
     public PromptDiscoveryService(List<String> mcpServiceURLs,
                                   McpClientFactory mcpClientFactory,
-                                  Map<String, String> serverNamesByUrl) {
+                                  Map<String, String> serverNamesByUrl,
+                                  ApplicationEventPublisher eventPublisher) { // Add this parameter
         this.mcpServiceURLs = mcpServiceURLs;
         this.mcpClientFactory = mcpClientFactory;
         this.serverNamesByUrl = serverNamesByUrl;
+        this.eventPublisher = eventPublisher; // Add this
     }
 
     /**
@@ -57,8 +60,7 @@ public class PromptDiscoveryService {
     }
 
     /**
-     * Discovers prompts from all configured MCP servers.
-     * This method creates temporary clients for discovery to avoid resource conflicts.
+     * Discovers prompts from all configured MCP servers and publishes configuration event.
      */
     private void discoverPrompts() {
         promptsByServer.clear();
@@ -83,6 +85,25 @@ public class PromptDiscoveryService {
 
         logger.info("Prompt discovery completed. Total prompts: {}, Servers with prompts: {}, Servers without prompts: {}",
                 promptsById.size(), serversWithPrompts, serversWithoutPrompts);
+
+        // Publish event after discovery is complete
+        publishPromptConfigurationEvent(serversWithPrompts);
+    }
+
+    /**
+     * Publishes PromptConfigurationEvent with current prompt state.
+     */
+    private void publishPromptConfigurationEvent(int serversWithPrompts) {
+        logger.debug("Publishing PromptConfigurationEvent: totalPrompts={}, serversWithPrompts={}, available={}",
+                promptsById.size(), serversWithPrompts, hasPrompts());
+
+        eventPublisher.publishEvent(new PromptConfigurationEvent(
+                this,
+                promptsById.size(),
+                serversWithPrompts,
+                hasPrompts(),
+                getPromptsByServer()
+        ));
     }
 
     /**
@@ -130,7 +151,6 @@ public class PromptDiscoveryService {
                 return false;
             }
         } catch (McpError e) {
-            // Check if this is a "method not found" error for prompts/list
             if (e.getMessage() != null && e.getMessage().contains("Method not found: prompts/list")) {
                 logger.debug("Server '{}' ({}) does not support prompts (tools-only server)", initialServerName, mcpUrl);
                 return false;
@@ -208,13 +228,6 @@ public class PromptDiscoveryService {
     }
 
     /**
-     * Returns all discovered prompts from all servers.
-     */
-    public List<McpPrompt> getAllPrompts() {
-        return new ArrayList<>(promptsById.values());
-    }
-
-    /**
      * Returns prompts grouped by server ID.
      */
     public Map<String, List<McpPrompt>> getPromptsByServer() {
@@ -226,13 +239,6 @@ public class PromptDiscoveryService {
      */
     public Optional<McpPrompt> findPromptById(String promptId) {
         return Optional.ofNullable(promptsById.get(promptId));
-    }
-
-    /**
-     * Finds prompts by server ID.
-     */
-    public List<McpPrompt> findPromptsByServer(String serverId) {
-        return promptsByServer.getOrDefault(serverId, Collections.emptyList());
     }
 
     /**

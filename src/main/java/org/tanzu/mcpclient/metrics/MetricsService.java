@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 import org.tanzu.mcpclient.chat.ChatConfigurationEvent;
 import org.tanzu.mcpclient.document.DocumentConfigurationEvent;
 import org.tanzu.mcpclient.prompt.McpPrompt;
-import org.tanzu.mcpclient.prompt.PromptDiscoveryService;
+import org.tanzu.mcpclient.prompt.PromptConfigurationEvent;
 
 import java.util.List;
 import java.util.Map;
@@ -22,15 +22,17 @@ public class MetricsService {
 
     private static final Logger logger = LoggerFactory.getLogger(MetricsService.class);
 
-    private final PromptDiscoveryService promptDiscoveryService;
-
     private String chatModel = "";
     private List<Agent> agentsWithHealth = List.of();
     private String embeddingModel = "";
     private String vectorStoreName = "";
 
-    public MetricsService(PromptDiscoveryService promptDiscoveryService) {
-        this.promptDiscoveryService = promptDiscoveryService;
+    private int totalPrompts = 0;
+    private int serversWithPrompts = 0;
+    private boolean promptsAvailable = false;
+    private Map<String, List<McpPrompt>> promptsByServer = Map.of();
+
+    public MetricsService() {
     }
 
     @EventListener
@@ -47,20 +49,24 @@ public class MetricsService {
         logger.debug("Updated document metrics: embedding={}, vectorStore={}", embeddingModel, vectorStoreName);
     }
 
-    /**
-     * Retrieves comprehensive platform metrics including full prompt data.
-     */
+    @EventListener
+    public void handlePromptConfigurationEvent(PromptConfigurationEvent event) {
+        this.totalPrompts = event.getTotalPrompts();
+        this.serversWithPrompts = event.getServersWithPrompts();
+        this.promptsAvailable = event.isAvailable();
+        this.promptsByServer = event.getPromptsByServer();
+        logger.debug("Updated prompt metrics: total={}, servers={}, available={}",
+                totalPrompts, serversWithPrompts, promptsAvailable);
+    }
+
     public Metrics getMetrics(String conversationId) {
         logger.debug("Retrieving metrics for conversation: {}", conversationId);
 
-        // Get full prompt data from the discovery service
-        Map<String, List<McpPrompt>> promptsByServer = promptDiscoveryService.getPromptsByServer();
-
-        EnhancedPromptMetrics promptMetrics = new EnhancedPromptMetrics(
-                promptDiscoveryService.getPromptCount(),
-                promptDiscoveryService.getServerCount(),
-                promptDiscoveryService.hasPrompts(),
-                promptsByServer
+        PromptMetrics promptMetrics = new PromptMetrics(
+                this.totalPrompts,
+                this.serversWithPrompts,
+                this.promptsAvailable,
+                this.promptsByServer
         );
 
         return new Metrics(
@@ -73,22 +79,16 @@ public class MetricsService {
         );
     }
 
-    /**
-     * Enhanced metrics record that includes full prompt data.
-     */
     public record Metrics(
             String conversationId,
             String chatModel,
             String embeddingModel,
             String vectorStoreName,
             Agent[] agents,
-            EnhancedPromptMetrics prompts
+            PromptMetrics prompts
     ) {}
 
-    /**
-     * Enhanced prompt metrics that include the full prompt data by server.
-     */
-    public record EnhancedPromptMetrics(
+    public record PromptMetrics(
             int totalPrompts,
             int serversWithPrompts,
             boolean available,

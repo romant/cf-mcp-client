@@ -1,9 +1,6 @@
 package org.tanzu.mcpclient.chat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -13,10 +10,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.tanzu.mcpclient.metrics.Agent;
 import org.tanzu.mcpclient.util.GenAIService;
+import org.tanzu.mcpclient.util.McpClientFactory;
 
-import javax.net.ssl.SSLContext;
-import java.net.http.HttpClient;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -33,17 +28,17 @@ public class ChatConfiguration {
     private final List<Agent> agentsWithHealth;
     private final List<String> healthyMcpServiceURLs;
     private final ApplicationEventPublisher eventPublisher;
-    private final SSLContext sslContext;
+    private final McpClientFactory mcpClientFactory;
 
     // Map to store server names by URL for use by other services
     private final Map<String, String> serverNamesByUrl = new ConcurrentHashMap<>();
 
-    public ChatConfiguration(GenAIService genAIService, ApplicationEventPublisher eventPublisher, SSLContext sslContext) {
+    public ChatConfiguration(GenAIService genAIService, ApplicationEventPublisher eventPublisher, McpClientFactory mcpClientFactory) {
         this.chatModel = genAIService.getChatModelName();
         this.agentServices = genAIService.getMcpServiceNames();
         this.allMcpServiceURLs = genAIService.getMcpServiceUrls();
         this.eventPublisher = eventPublisher;
-        this.sslContext = sslContext;
+        this.mcpClientFactory = mcpClientFactory;
         this.agentsWithHealth = new ArrayList<>();
         this.healthyMcpServiceURLs = new ArrayList<>();
 
@@ -54,7 +49,6 @@ public class ChatConfiguration {
 
     @EventListener(ApplicationReadyEvent.class)
     public void publishConfigurationEvent() {
-        // Test MCP server health during application startup
         testMcpServerHealth();
 
         logger.debug("Publishing ChatConfigurationEvent: chatModel={}, agentsWithHealth={}",
@@ -123,18 +117,7 @@ public class ChatConfiguration {
         String serverName = serviceName; // Default to service name
 
         try {
-            HttpClient.Builder clientBuilder = HttpClient.newBuilder()
-                    .sslContext(sslContext)
-                    .connectTimeout(Duration.ofSeconds(10)); // Shorter timeout for health checks
-
-            HttpClientSseClientTransport transport = HttpClientSseClientTransport.builder(serviceUrl)
-                    .clientBuilder(clientBuilder)
-                    .objectMapper(new ObjectMapper())
-                    .build();
-
-            McpSyncClient client = McpClient.sync(transport)
-                    .requestTimeout(Duration.ofSeconds(10)) // Shorter timeout for health checks
-                    .build();
+            McpSyncClient client = mcpClientFactory.createHealthCheckClient(serviceUrl);
 
             // Attempt to initialize the client
             var initResult = client.initialize();

@@ -18,6 +18,10 @@ import java.time.Duration;
 @Component
 public class McpClientFactory {
 
+    private static final Duration DEFAULT_CONNECT_TIMEOUT = Duration.ofSeconds(30);
+    private static final Duration DEFAULT_REQUEST_TIMEOUT = Duration.ofSeconds(30);
+    private static final Duration HEALTH_CHECK_TIMEOUT = Duration.ofSeconds(10);
+
     private final SSLContext sslContext;
 
     public McpClientFactory(SSLContext sslContext) {
@@ -25,11 +29,24 @@ public class McpClientFactory {
     }
 
     /**
-     * Creates a new MCP synchronous client for the specified server URL.
-     * The client is configured with appropriate timeouts and SSL context.
+     * Creates a new MCP synchronous client for the specified server URL with default timeouts.
      */
     public McpSyncClient createMcpSyncClient(String serverUrl) {
-        HttpClient.Builder clientBuilder = createHttpClientBuilder();
+        return createMcpSyncClient(serverUrl, DEFAULT_CONNECT_TIMEOUT, DEFAULT_REQUEST_TIMEOUT);
+    }
+
+    /**
+     * Creates a new MCP synchronous client optimized for health checks (shorter timeouts).
+     */
+    public McpSyncClient createHealthCheckClient(String serverUrl) {
+        return createMcpSyncClient(serverUrl, HEALTH_CHECK_TIMEOUT, HEALTH_CHECK_TIMEOUT);
+    }
+
+    /**
+     * Creates a new MCP synchronous client with custom timeout configuration.
+     */
+    public McpSyncClient createMcpSyncClient(String serverUrl, Duration connectTimeout, Duration requestTimeout) {
+        HttpClient.Builder clientBuilder = createHttpClientBuilder(connectTimeout);
 
         HttpClientSseClientTransport transport = HttpClientSseClientTransport.builder(serverUrl)
                 .clientBuilder(clientBuilder)
@@ -37,35 +54,13 @@ public class McpClientFactory {
                 .build();
 
         return McpClient.sync(transport)
-                .requestTimeout(Duration.ofSeconds(30))
+                .requestTimeout(requestTimeout)
                 .build();
     }
 
-    /**
-     * Creates an HTTP client builder with consistent configuration.
-     */
-    private HttpClient.Builder createHttpClientBuilder() {
+    private HttpClient.Builder createHttpClientBuilder(Duration connectTimeout) {
         return HttpClient.newBuilder()
                 .sslContext(sslContext)
-                .connectTimeout(Duration.ofSeconds(30));
-    }
-
-    /**
-     * Static method for creating MCP clients when dependency injection isn't available.
-     * This is useful for testing or special cases where the factory isn't available.
-     */
-    public static McpSyncClient createMcpSyncClient(String serverUrl, SSLContext sslContext) {
-        HttpClient.Builder clientBuilder = HttpClient.newBuilder()
-                .sslContext(sslContext)
-                .connectTimeout(Duration.ofSeconds(30));
-
-        HttpClientSseClientTransport transport = HttpClientSseClientTransport.builder(serverUrl)
-                .clientBuilder(clientBuilder)
-                .objectMapper(new ObjectMapper())
-                .build();
-
-        return McpClient.sync(transport)
-                .requestTimeout(Duration.ofSeconds(30))
-                .build();
+                .connectTimeout(connectTimeout);
     }
 }
