@@ -7,7 +7,7 @@
                   [style.background-color]="message.persona == 'user' ? 'var(--mat-sys-primary-container)' : 'var(--mat-sys-surface)'">
           <mat-card-content>
             @if (message.persona == 'user') {
-              {{ message.text }}
+              <div class="user-message-content">{{ message.text }}</div>
             } @else {
               @if (message.typing) {
                 <div class="typing__dot"></div><div class="typing__dot"></div><div class="typing__dot"></div>

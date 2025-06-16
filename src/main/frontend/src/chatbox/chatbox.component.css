@@ -32,6 +32,10 @@
   text-align: right;
 }
 
+.chat-message.user .user-message-content {
+  white-space: pre-line; /* Preserve line breaks and allow text wrapping */
+}
+
 .chat-message.bot {
   margin-right: auto;
   text-align: left;

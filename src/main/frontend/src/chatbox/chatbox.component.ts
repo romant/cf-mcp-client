@@ -20,7 +20,10 @@ import {MatIconModule} from '@angular/material/icon';
 import {MatDialog} from '@angular/material/dialog';
 import {MarkdownComponent} from 'ngx-markdown';
 import {PlatformMetrics} from '../app/app.component';
-import {PromptSelectionDialogComponent, PromptSelectionResult} from '../prompt-selection-dialog/prompt-selection-dialog.component';
+import {
+  PromptSelectionDialogComponent,
+  PromptSelectionResult
+} from '../prompt-selection-dialog/prompt-selection-dialog.component';
 import {PromptResolutionService} from '../services/prompt-resolution.service';
 import {MatTooltip} from '@angular/material/tooltip';
 
@@ -151,22 +154,11 @@ export class ChatboxComponent {
     });
   }
 
-  /**
-   * Insert a simple prompt into the chat input
-   */
   private insertPromptIntoChat(promptName: string, description?: string): void {
-    const promptText = description || promptName;
-
-    if (this.chatMessage.trim()) {
-      this.chatMessage += '\n\n' + promptText;
-    } else {
-      this.chatMessage = promptText;
-    }
+    this.chatMessage = description || promptName;
+    this.sendChatMessage();
   }
 
-  /**
-   * Insert a resolved prompt into the chat input
-   */
   private insertResolvedPromptIntoChat(resolvedPrompt: any): void {
     let content = '';
 
@@ -182,11 +174,8 @@ export class ChatboxComponent {
       content = 'Resolved prompt content';
     }
 
-    if (this.chatMessage.trim()) {
-      this.chatMessage += '\n\n' + content;
-    } else {
-      this.chatMessage = content;
-    }
+    this.chatMessage = content;
+    this.sendChatMessage();
   }
 
   private streamChatResponse(params: HttpParams, botMessage: ChatboxMessage): Promise<void> {
