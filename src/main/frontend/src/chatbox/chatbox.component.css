@@ -45,6 +45,10 @@
   flex-grow: 1;
 }
 
+.chatbox-footer ng-form .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
 /* Typing CSS */
 .typing__dot {
   float: left;

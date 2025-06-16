@@ -11,18 +11,23 @@ import {
 } from '@angular/core';
 import {DOCUMENT} from '@angular/common';
 import {HttpClient, HttpParams} from '@angular/common/http';
-import {MatButton} from '@angular/material/button';
+import {MatButton, MatIconButton} from '@angular/material/button';
 import {FormsModule} from '@angular/forms';
 import {MatFormField} from '@angular/material/form-field';
 import {MatInput, MatInputModule} from '@angular/material/input';
 import {MatCard, MatCardContent} from '@angular/material/card';
+import {MatIconModule} from '@angular/material/icon';
+import {MatDialog} from '@angular/material/dialog';
 import {MarkdownComponent} from 'ngx-markdown';
 import {PlatformMetrics} from '../app/app.component';
+import {PromptSelectionDialogComponent, PromptSelectionResult} from '../prompt-selection-dialog/prompt-selection-dialog.component';
+import {PromptResolutionService} from '../services/prompt-resolution.service';
+import {MatTooltip} from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-chatbox',
   standalone: true,
-  imports: [MatButton, FormsModule, MatFormField, MatInput, MatCard, MatCardContent, MarkdownComponent, MatInputModule],
+  imports: [MatButton, FormsModule, MatFormField, MatInput, MatCard, MatCardContent, MarkdownComponent, MatInputModule, MatIconModule, MatIconButton, MatTooltip],
   templateUrl: './chatbox.component.html',
   styleUrl: './chatbox.component.css'
 })
@@ -40,7 +45,9 @@ export class ChatboxComponent {
   constructor(private httpClient: HttpClient,
               private injector: Injector,
               @Inject(DOCUMENT) private document: Document,
-              private ngZone: NgZone) {
+              private ngZone: NgZone,
+              private dialog: MatDialog,
+              private promptResolutionService: PromptResolutionService) {
     if (this.document.location.hostname == 'localhost') {
       this.host = 'localhost:8080';
     } else this.host = this.document.location.host;
@@ -80,6 +87,105 @@ export class ChatboxComponent {
 
     } catch (error) {
       console.error('Chat request error:', error);
+    }
+  }
+
+  /**
+   * Check if there are any available prompts
+   */
+  hasAvailablePrompts(): boolean {
+    return this.metrics &&
+      this.metrics.prompts &&
+      this.metrics.prompts.available &&
+      this.metrics.prompts.totalPrompts > 0;
+  }
+
+  /**
+   * Open the prompt selection dialog
+   */
+  openPromptSelection(): void {
+    if (!this.hasAvailablePrompts()) {
+      return;
+    }
+
+    const dialogRef = this.dialog.open(PromptSelectionDialogComponent, {
+      data: { metrics: this.metrics },
+      width: '90vw',
+      maxWidth: '800px',
+      maxHeight: '80vh',
+      panelClass: 'prompt-selection-dialog-container'
+    });
+
+    dialogRef.afterClosed().subscribe((result: PromptSelectionResult) => {
+      if (result) {
+        this.handlePromptSelection(result);
+      }
+    });
+  }
+
+  /**
+   * Handle the result from prompt selection dialog
+   */
+  private handlePromptSelection(result: PromptSelectionResult): void {
+    const promptId = `${result.prompt.serverId}:${result.prompt.name}`;
+
+    // If prompt has no arguments, use it directly
+    if (!result.prompt.arguments || result.prompt.arguments.length === 0) {
+      this.insertPromptIntoChat(result.prompt.name, result.prompt.description);
+      return;
+    }
+
+    // Resolve prompt with arguments
+    this.promptResolutionService.resolvePrompt({
+      promptId: promptId,
+      arguments: result.arguments
+    }).subscribe({
+      next: (resolvedPrompt) => {
+        this.insertResolvedPromptIntoChat(resolvedPrompt);
+      },
+      error: (error) => {
+        console.error('Error resolving prompt:', error);
+        // Fallback: insert prompt name
+        this.insertPromptIntoChat(result.prompt.name, 'Failed to resolve prompt with arguments');
+      }
+    });
+  }
+
+  /**
+   * Insert a simple prompt into the chat input
+   */
+  private insertPromptIntoChat(promptName: string, description?: string): void {
+    const promptText = description || promptName;
+
+    if (this.chatMessage.trim()) {
+      this.chatMessage += '\n\n' + promptText;
+    } else {
+      this.chatMessage = promptText;
+    }
+  }
+
+  /**
+   * Insert a resolved prompt into the chat input
+   */
+  private insertResolvedPromptIntoChat(resolvedPrompt: any): void {
+    let content = '';
+
+    if (resolvedPrompt.messages && resolvedPrompt.messages.length > 0) {
+      // Use structured messages
+      content = resolvedPrompt.messages
+        .map((msg: any) => msg.content)
+        .join('\n\n');
+    } else if (resolvedPrompt.content) {
+      // Use direct content
+      content = resolvedPrompt.content;
+    } else {
+      content = 'Resolved prompt content';
+    }
+
+    if (this.chatMessage.trim()) {
+      this.chatMessage += '\n\n' + content;
+    } else {
+      this.chatMessage = content;
     }
   }
 

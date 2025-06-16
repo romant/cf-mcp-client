@@ -1,9 +1,6 @@
 package org.tanzu.mcpclient.chat;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.McpSyncClient;
-import io.modelcontextprotocol.client.transport.HttpClientSseClientTransport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
@@ -18,11 +15,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.tanzu.mcpclient.document.DocumentService;
+import org.tanzu.mcpclient.util.McpClientFactory;
 import reactor.core.publisher.Flux;
 
-import javax.net.ssl.SSLContext;
-import java.net.http.HttpClient;
-import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -36,7 +31,7 @@ public class ChatService {
     private final ChatClient chatClient;
     private final VectorStore vectorStore;
     private final List<String> mcpServiceURLs;
-    private final SSLContext sslContext;
+    private final McpClientFactory mcpClientFactory;
 
     @Value("classpath:/prompts/system-prompt.st")
     private Resource systemChatPrompt;
@@ -44,13 +39,13 @@ public class ChatService {
     private static final Logger logger = LoggerFactory.getLogger(ChatService.class);
 
     public ChatService(ChatClient.Builder chatClientBuilder, BaseChatMemoryAdvisor memoryAdvisor,
-                       List<String> mcpServiceURLs, VectorStore vectorStore, SSLContext sslContext) {
+                       List<String> mcpServiceURLs, VectorStore vectorStore, McpClientFactory mcpClientFactory) {
         chatClientBuilder = chatClientBuilder.defaultAdvisors(memoryAdvisor, new SimpleLoggerAdvisor());
         this.chatClient = chatClientBuilder.build();
 
         this.mcpServiceURLs = mcpServiceURLs;
         this.vectorStore = vectorStore;
-        this.sslContext = sslContext;
+        this.mcpClientFactory = mcpClientFactory;
     }
 
     public Flux<String> chatStream(String chat, String conversationId, Optional<String> documentId) {
@@ -65,25 +60,9 @@ public class ChatService {
     }
 
     private Stream<McpSyncClient> createAndInitializeMcpClients() {
-        HttpClient.Builder clientBuilder = createHttpClientBuilder();
-
         return mcpServiceURLs.stream()
-                .map(url -> createMcpSyncClient(clientBuilder, url))
+                .map(mcpClientFactory::createMcpSyncClient)
                 .peek(McpSyncClient::initialize);
-    }
-
-    private HttpClient.Builder createHttpClientBuilder() {
-        return HttpClient.newBuilder()
-                .sslContext(sslContext)
-                .connectTimeout(Duration.ofSeconds(30));
-    }
-
-    private McpSyncClient createMcpSyncClient(HttpClient.Builder clientBuilder, String url) {
-        HttpClientSseClientTransport transport = HttpClientSseClientTransport.builder(url).
-                clientBuilder(clientBuilder).
-                objectMapper(new ObjectMapper()).
-                build();
-        return McpClient.sync(transport).requestTimeout(Duration.ofSeconds(30)).build();
     }
 
     private Flux<String> buildAndExecuteStreamChatRequest(String chat, String conversationId, Optional<String> documentId,

@@ -34,7 +34,7 @@
                   [matTooltip]="agent.healthy ? 'Click to view tools' : 'Agent is unhealthy'">
             <mat-icon>{{ agent.healthy ? 'info' : 'close' }}</mat-icon>
           </button>
-          <div matListItemTitle>{{ agent.name }}</div>
+          <div matListItemTitle>{{ agent.serverName || agent.name }}</div>
           <div matListItemLine>
             {{ agent.healthy ? (agent.tools.length + ' tools available') : 'Unhealthy' }}
           </div>

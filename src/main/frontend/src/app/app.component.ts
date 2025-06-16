@@ -28,7 +28,13 @@ export class AppComponent {
     chatModel: '',
     embeddingModel: '',
     vectorStoreName: '',
-    agents: []
+    agents: [],
+    prompts: {
+      totalPrompts: 0,
+      serversWithPrompts: 0,
+      available: false,
+      promptsByServer: {}
+    }
   };
 
   constructor(private httpClient: HttpClient, @Inject(DOCUMENT) private document: Document) {
@@ -75,8 +81,15 @@ export class AppComponent {
             chatModel: '',
             embeddingModel: '',
             vectorStoreName: '',
-            agents: []
-          };        }
+            agents: [],
+            prompts: {
+              totalPrompts: 0,
+              serversWithPrompts: 0,
+              available: false,
+              promptsByServer: {}
+            }
+          };
+        }
       });
   }
 }
@@ -88,8 +101,32 @@ export interface Tool {
 
 export interface Agent {
   name: string;
+  serverName: string;
   healthy: boolean;
   tools: Tool[];
+}
+
+export interface PromptArgument {
+  name: string;
+  description: string;
+  required: boolean;
+  defaultValue?: any;
+  schema?: any;
+}
+
+export interface McpPrompt {
+  serverId: string;
+  serverName: string;
+  name: string;
+  description: string;
+  arguments: PromptArgument[];
+}
+
+export interface EnhancedPromptMetrics {
+  totalPrompts: number;
+  serversWithPrompts: number;
+  available: boolean;
+  promptsByServer: { [serverId: string]: McpPrompt[] };
 }
 
 export interface PlatformMetrics {
@@ -98,4 +135,5 @@ export interface PlatformMetrics {
   embeddingModel: string;
   vectorStoreName: string;
   agents: Agent[];
+  prompts: EnhancedPromptMetrics;
 }
