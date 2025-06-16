@@ -21,18 +21,17 @@
     }
   </div>
   <div class="chatbox-footer">
-    <ng-form style="display: flex; align-items: flex-end; gap: 8px;">
+    <ng-form style="display: flex; align-items: center; gap: 8px;">
       <button mat-icon-button type="button" (click)="openPromptSelection()"
               [disabled]="!hasAvailablePrompts()"
-              matTooltip="Select a prompt"
-              style="margin-bottom: 8px;">
+              matTooltip="Select a prompt">
         <mat-icon>psychology</mat-icon>
       </button>
       <mat-form-field style="flex-grow: 1">
         <input name="chatbox-input" placeholder="Type a message..." matInput [(ngModel)]="chatMessage" type="text"
                (keydown.enter)="sendChatMessage()">
       </mat-form-field>
-      <button mat-flat-button type="button" (click)="sendChatMessage()" style="margin-bottom: 8px;">Send</button>
+      <button mat-flat-button type="button" (click)="sendChatMessage()">Send</button>
     </ng-form>
   </div>
 </div>
