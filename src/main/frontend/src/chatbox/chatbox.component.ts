@@ -7,7 +7,10 @@ import {
   Input,
   NgZone,
   runInInjectionContext,
-  ViewChild
+  ViewChild,
+  signal,
+  computed,
+  effect
 } from '@angular/core';
 import {DOCUMENT} from '@angular/common';
 import {HttpClient, HttpParams} from '@angular/common/http';
@@ -27,6 +30,12 @@ import {
 import {PromptResolutionService} from '../services/prompt-resolution.service';
 import {MatTooltip} from '@angular/material/tooltip';
 
+interface ChatboxMessage {
+  text: string;
+  persona: 'user' | 'bot';
+  typing?: boolean;
+}
+
 @Component({
   selector: 'app-chatbox',
   standalone: true,
@@ -36,71 +45,198 @@ import {MatTooltip} from '@angular/material/tooltip';
 })
 export class ChatboxComponent {
   @Input() documentId: string = '';
-  @Input() metrics!: PlatformMetrics;
 
-  messages: ChatboxMessage[] = [];
-  chatMessage = '';
-  host = '';
-  protocol = '';
+  // Convert metrics input to signal for reactivity
+  @Input() set metrics(value: PlatformMetrics) {
+    this._metricsInput.set(value);
+  }
+  get metrics(): PlatformMetrics {
+    return this._metricsInput();
+  }
+
+  private readonly _metricsInput = signal<PlatformMetrics>({
+    conversationId: '',
+    chatModel: '',
+    embeddingModel: '',
+    vectorStoreName: '',
+    agents: [],
+    prompts: {
+      totalPrompts: 0,
+      serversWithPrompts: 0,
+      available: false,
+      promptsByServer: {}
+    }
+  });
+
+  // State signals
+  private readonly _messages = signal<ChatboxMessage[]>([]);
+  private readonly _chatMessage = signal<string>('');
+  private readonly _isStreaming = signal<boolean>(false);
+  private readonly _isConnecting = signal<boolean>(false);
+
+  // Public readonly signals
+  readonly messages = this._messages.asReadonly();
+  readonly chatMessage = this._chatMessage.asReadonly();
+
+  // Computed signals for derived state
+  readonly canSendMessage = computed(() =>
+      this._chatMessage().trim().length > 0 &&
+      !this._isStreaming() &&
+      !this._isConnecting()
+    // Removed chat model check - let users try even without a model
+  );
+
+  readonly isBusy = computed(() =>
+    this._isStreaming() || this._isConnecting()
+  );
+
+  readonly lastBotMessage = computed(() => {
+    const msgs = this._messages();
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      if (msgs[i].persona === 'bot') {
+        return msgs[i];
+      }
+    }
+    return null;
+  });
+
+  readonly hasMessages = computed(() => this._messages().length > 0);
+
+  readonly hasAvailablePrompts = computed(() => {
+    const metrics = this._metricsInput();
+    return metrics &&
+      metrics.prompts &&
+      metrics.prompts.available &&
+      metrics.prompts.totalPrompts > 0;
+  });
+
+  readonly sendButtonText = computed(() => {
+    if (this._isConnecting()) return 'Connecting...';
+    if (this._isStreaming()) return 'Streaming...';
+    return 'Send';
+  });
+
+  readonly sendButtonTooltip = computed(() => {
+    if (this._isStreaming() || this._isConnecting()) {
+      return 'Please wait for current message to complete';
+    }
+    if (!this.canSendMessage()) {
+      return 'Enter a message to send';
+    }
+    return 'Send message';
+  });
+
+  readonly inputPlaceholder = computed(() => {
+    return 'Type a message...';
+  });
+
+  private host = '';
+  private protocol = '';
 
   @ViewChild("chatboxMessages") private chatboxMessages?: ElementRef<HTMLDivElement>;
 
-  constructor(private httpClient: HttpClient,
-              private injector: Injector,
-              @Inject(DOCUMENT) private document: Document,
-              private ngZone: NgZone,
-              private dialog: MatDialog,
-              private promptResolutionService: PromptResolutionService) {
-    if (this.document.location.hostname == 'localhost') {
+  constructor(
+    private httpClient: HttpClient,
+    private injector: Injector,
+    @Inject(DOCUMENT) private document: Document,
+    private ngZone: NgZone,
+    private dialog: MatDialog,
+    private promptResolutionService: PromptResolutionService
+  ) {
+    // Set up host and protocol
+    if (this.document.location.hostname === 'localhost') {
       this.host = 'localhost:8080';
-    } else this.host = this.document.location.host;
+    } else {
+      this.host = this.document.location.host;
+    }
     this.protocol = this.document.location.protocol;
+
+    // Effects for side effects
+    this.setupEffects();
   }
 
-  async sendChatMessage() {
-    if (!this.chatMessage.trim()) return;
+  private setupEffects(): void {
+    // Auto-scroll when messages change
+    effect(() => {
+      const messages = this._messages();
+      if (messages.length > 0) {
+        // Use a small delay to ensure DOM is updated
+        setTimeout(() => this.scrollChatToBottom(), 10);
+      }
+    });
 
-    this.messages.push({text: this.chatMessage, persona: 'user'});
-    let botMessage: ChatboxMessage = {text: '', persona: 'bot', typing: true};
-    this.messages.push(botMessage);
-    this.scrollChatToBottom();
+    // Log streaming state changes for debugging
+    effect(() => {
+      const streaming = this._isStreaming();
+      const connecting = this._isConnecting();
+      if (streaming || connecting) {
+        console.log('Chat state:', { streaming, connecting });
+      }
+    });
 
-    // Create HTTP params without conversationId (handled by session)
-    let params: HttpParams = new HttpParams().set('chat', this.chatMessage);
+    // Debug metrics changes
+    effect(() => {
+      const metrics = this._metricsInput();
+      console.log('Chatbox received metrics:', {
+        hasPrompts: !!metrics.prompts,
+        available: metrics.prompts?.available,
+        totalPrompts: metrics.prompts?.totalPrompts,
+        hasAvailablePrompts: this.hasAvailablePrompts()
+      });
+    });
+
+    // Validate chat model availability
+    effect(() => {
+      const canSend = this.canSendMessage();
+      const metrics = this._metricsInput();
+      const hasModel = metrics.chatModel !== '';
+      if (!hasModel && this._chatMessage().trim().length > 0) {
+        console.warn('Chat model not available');
+      }
+    });
+  }
+
+  // Method to update chat message (for template binding)
+  updateChatMessage(message: string): void {
+    this._chatMessage.set(message);
+  }
+
+  async sendChatMessage(): Promise<void> {
+    if (!this.canSendMessage()) return;
+
+    const messageText = this._chatMessage();
+
+    // Add user message to the conversation
+    this.addUserMessage(messageText);
+
+    // Create and add bot message placeholder
+    const botMessage = this.addBotMessagePlaceholder();
+
+    // Clear input and set connecting state
+    this._chatMessage.set('');
+    this._isConnecting.set(true);
+
+    // Create HTTP params
+    let params: HttpParams = new HttpParams().set('chat', messageText);
     if (this.documentId.length > 0) {
       params = params.set('documentId', this.documentId);
     }
 
-    this.chatMessage = '';
-
     try {
-      if (this.metrics.chatModel == '') {
-        this.ngZone.run(() => {
-          if (botMessage.text === '') {
-            botMessage.typing = false;
-            botMessage.text = 'No chat model available';
-          }
-          this.scrollChatToBottom();
-        });
+      // Check if chat model is available
+      const metrics = this._metricsInput();
+      if (!metrics.chatModel) {
+        this.handleChatError(botMessage, 'No chat model is available');
         return;
       }
 
-      // Use Server-Sent Events for streaming
+      // Stream the chat response
       await this.streamChatResponse(params, botMessage);
 
     } catch (error) {
       console.error('Chat request error:', error);
+      this.handleChatError(botMessage, 'Sorry, I encountered an error processing your request.');
     }
-  }
-
-  /**
-   * Check if there are any available prompts
-   */
-  hasAvailablePrompts(): boolean {
-    return this.metrics &&
-      this.metrics.prompts &&
-      this.metrics.prompts.available &&
-      this.metrics.prompts.totalPrompts > 0;
   }
 
   /**
@@ -112,7 +248,7 @@ export class ChatboxComponent {
     }
 
     const dialogRef = this.dialog.open(PromptSelectionDialogComponent, {
-      data: { metrics: this.metrics },
+      data: { metrics: this._metricsInput() },
       width: '90vw',
       maxWidth: '800px',
       maxHeight: '80vh',
@@ -123,6 +259,74 @@ export class ChatboxComponent {
       if (result) {
         this.handlePromptSelection(result);
       }
+    });
+  }
+
+  private addUserMessage(text: string): void {
+    this._messages.update(msgs => [
+      ...msgs,
+      { text, persona: 'user' }
+    ]);
+  }
+
+  private addBotMessagePlaceholder(): ChatboxMessage {
+    const botMessage: ChatboxMessage = { text: '', persona: 'bot', typing: true };
+    this._messages.update(msgs => [...msgs, botMessage]);
+    return botMessage;
+  }
+
+  private updateBotMessage(content: string, typing: boolean = false): void {
+    this._messages.update(msgs => {
+      const lastIndex = msgs.length - 1;
+      if (lastIndex >= 0 && msgs[lastIndex].persona === 'bot') {
+        const updatedMessage = {
+          ...msgs[lastIndex],
+          text: msgs[lastIndex].text + content,
+          typing
+        };
+        return [
+          ...msgs.slice(0, lastIndex),
+          updatedMessage
+        ];
+      }
+      return msgs;
+    });
+  }
+
+  private setBotMessageTyping(typing: boolean): void {
+    this._messages.update(msgs => {
+      const lastIndex = msgs.length - 1;
+      if (lastIndex >= 0 && msgs[lastIndex].persona === 'bot') {
+        const updatedMessage = {
+          ...msgs[lastIndex],
+          typing
+        };
+        return [
+          ...msgs.slice(0, lastIndex),
+          updatedMessage
+        ];
+      }
+      return msgs;
+    });
+  }
+
+  private handleChatError(botMessage: ChatboxMessage, errorMessage: string): void {
+    this.ngZone.run(() => {
+      this.setBotMessageTyping(false);
+      if (this.lastBotMessage()?.text === '') {
+        this._messages.update(msgs => {
+          const lastIndex = msgs.length - 1;
+          if (lastIndex >= 0 && msgs[lastIndex].persona === 'bot') {
+            return [
+              ...msgs.slice(0, lastIndex),
+              { ...msgs[lastIndex], text: errorMessage, typing: false }
+            ];
+          }
+          return msgs;
+        });
+      }
+      this._isStreaming.set(false);
+      this._isConnecting.set(false);
     });
   }
 
@@ -155,7 +359,8 @@ export class ChatboxComponent {
   }
 
   private insertPromptIntoChat(promptName: string, description?: string): void {
-    this.chatMessage = description || promptName;
+    const content = description || promptName;
+    this._chatMessage.set(content);
     this.sendChatMessage();
   }
 
@@ -174,7 +379,7 @@ export class ChatboxComponent {
       content = 'Resolved prompt content';
     }
 
-    this.chatMessage = content;
+    this._chatMessage.set(content);
     this.sendChatMessage();
   }
 
@@ -188,10 +393,18 @@ export class ChatboxComponent {
 
       let isFirstChunk = true;
 
+      eventSource.onopen = () => {
+        console.log('EventSource connection opened');
+        this.ngZone.run(() => {
+          this._isConnecting.set(false);
+          this._isStreaming.set(true);
+        });
+      };
+
       eventSource.onmessage = (event) => {
         this.ngZone.run(() => {
           if (isFirstChunk) {
-            botMessage.typing = false;
+            this.setBotMessageTyping(false);
             isFirstChunk = false;
           }
 
@@ -205,42 +418,31 @@ export class ChatboxComponent {
           }
 
           if (chunk && chunk.length > 0) {
-            botMessage.text += chunk;
+            this.updateBotMessage(chunk);
           }
-
-          // Scroll to bottom after each update
-          setTimeout(() => {
-            this.scrollChatToBottom();
-          }, 0);
         });
       };
 
       eventSource.onerror = (error) => {
         console.error('EventSource error:', error);
         eventSource.close();
-        this.ngZone.run(() => {
-          if (botMessage.text === '') {
-            botMessage.typing = false;
-            botMessage.text = "Sorry, I encountered an error processing your request.";
-          }
-          this.scrollChatToBottom();
-        });
-        reject(error);  // Only reject here
+        this.handleChatError(botMessage, 'Sorry, I encountered an error processing your request.');
+        reject(error);
       };
 
-      eventSource.onopen = () => {
-        console.log('EventSource connection opened');
-      };
-
-      // Only listen for successful completion
+      // Listen for successful completion
       eventSource.addEventListener('close', () => {
         eventSource.close();
-        resolve();  // Only resolve on normal completion
+        this.ngZone.run(() => {
+          this._isStreaming.set(false);
+          this._isConnecting.set(false);
+        });
+        resolve();
       });
     });
   }
 
-  scrollChatToBottom() {
+  private scrollChatToBottom(): void {
     runInInjectionContext(this.injector, () => {
       afterNextRender({
         read: () => {
@@ -251,13 +453,7 @@ export class ChatboxComponent {
             });
           }
         }
-      })
-    })
+      });
+    });
   }
-}
-
-interface ChatboxMessage {
-  text: string;
-  persona: 'user' | 'bot';
-  typing?: boolean;
 }
