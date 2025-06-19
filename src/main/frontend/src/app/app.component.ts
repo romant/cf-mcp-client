@@ -1,4 +1,4 @@
-import { Component, DestroyRef, Inject, inject } from '@angular/core';
+import { Component, DestroyRef, Inject, inject, signal, effect } from '@angular/core';
 import { MatToolbar } from '@angular/material/toolbar';
 import { ChatPanelComponent } from '../chat-panel/chat-panel.component';
 import { MemoryPanelComponent } from '../memory-panel/memory-panel.component';
@@ -19,11 +19,10 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 })
 export class AppComponent {
   title = 'pulseui';
-  currentDocumentId: string = '';
-  private destroyRef = inject(DestroyRef);
 
-  // Metrics data to be shared with all components
-  metrics: PlatformMetrics = {
+  // Use signals for reactive state management
+  private readonly _currentDocumentId = signal<string>('');
+  private readonly _metrics = signal<PlatformMetrics>({
     conversationId: '',
     chatModel: '',
     embeddingModel: '',
@@ -35,22 +34,39 @@ export class AppComponent {
       available: false,
       promptsByServer: {}
     }
-  };
+  });
 
-  constructor(private httpClient: HttpClient, @Inject(DOCUMENT) private document: Document) {
+  // Public readonly signals
+  readonly currentDocumentId = this._currentDocumentId.asReadonly();
+  readonly metrics = this._metrics.asReadonly();
+
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly httpClient = inject(HttpClient);
+  private readonly document = inject(DOCUMENT);
+
+  constructor() {
     this.initMetricsPolling();
+
+    // Use effect for side effects based on signal changes
+    effect(() => {
+      const documentId = this.currentDocumentId();
+      if (documentId) {
+        console.log('Document selected with ID:', documentId);
+      }
+    });
   }
 
   // Method to handle document selection from DocumentPanelComponent
-  onDocumentSelected(documentId: string) {
-    this.currentDocumentId = documentId;
-    console.log('Document selected with ID:', documentId);
+  onDocumentSelected(documentId: string): void {
+    this._currentDocumentId.set(documentId);
   }
 
-  // Initialize metrics polling
+  // Initialize metrics polling with improved error handling
   private initMetricsPolling(): void {
-    // Set up interval to fetch metrics every 5 seconds
+    // Fetch initial metrics
     this.fetchMetrics();
+
+    // Set up interval to fetch metrics every 5 seconds
     interval(5000)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
@@ -58,39 +74,32 @@ export class AppComponent {
       });
   }
 
-  fetchMetrics() {
+  private fetchMetrics(): void {
+    const { protocol, host } = this.getApiBaseUrl();
+
+    this.httpClient.get<PlatformMetrics>(`${protocol}//${host}/metrics`)
+      .subscribe({
+        next: (data) => {
+          this._metrics.set(data);
+        },
+        error: (error) => {
+          console.error('Error fetching metrics:', error);
+        }
+      });
+  }
+
+  private getApiBaseUrl(): { protocol: string; host: string } {
     let host: string;
     let protocol: string;
 
-    if (this.document.location.hostname == 'localhost') {
+    if (this.document.location.hostname === 'localhost') {
       host = 'localhost:8080';
     } else {
       host = this.document.location.host;
     }
     protocol = this.document.location.protocol;
 
-    this.httpClient.get<PlatformMetrics>(`${protocol}//${host}/metrics`)
-      .subscribe({
-        next: (data) => {
-          this.metrics = data;
-        },
-        error: (error) => {
-          console.error('Error fetching memory metrics:', error);
-          this.metrics = {
-            conversationId: '',
-            chatModel: '',
-            embeddingModel: '',
-            vectorStoreName: '',
-            agents: [],
-            prompts: {
-              totalPrompts: 0,
-              serversWithPrompts: 0,
-              available: false,
-              promptsByServer: {}
-            }
-          };
-        }
-      });
+    return { protocol, host };
   }
 }
 
