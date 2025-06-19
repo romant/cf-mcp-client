@@ -13,7 +13,7 @@ import {
   effect
 } from '@angular/core';
 import {DOCUMENT} from '@angular/common';
-import {HttpClient, HttpParams} from '@angular/common/http';
+import {HttpParams} from '@angular/common/http';
 import {MatButton, MatIconButton} from '@angular/material/button';
 import {FormsModule} from '@angular/forms';
 import {MatFormField} from '@angular/material/form-field';
@@ -100,8 +100,6 @@ export class ChatboxComponent {
     return null;
   });
 
-  readonly hasMessages = computed(() => this._messages().length > 0);
-
   readonly hasAvailablePrompts = computed(() => {
     const metrics = this._metricsInput();
     return metrics &&
@@ -126,17 +124,12 @@ export class ChatboxComponent {
     return 'Send message';
   });
 
-  readonly inputPlaceholder = computed(() => {
-    return 'Type a message...';
-  });
-
   private host = '';
   private protocol = '';
 
   @ViewChild("chatboxMessages") private chatboxMessages?: ElementRef<HTMLDivElement>;
 
   constructor(
-    private httpClient: HttpClient,
     private injector: Injector,
     @Inject(DOCUMENT) private document: Document,
     private ngZone: NgZone,
@@ -187,7 +180,6 @@ export class ChatboxComponent {
 
     // Validate chat model availability
     effect(() => {
-      const canSend = this.canSendMessage();
       const metrics = this._metricsInput();
       const hasModel = metrics.chatModel !== '';
       if (!hasModel && this._chatMessage().trim().length > 0) {
@@ -210,9 +202,8 @@ export class ChatboxComponent {
     this.addUserMessage(messageText);
 
     // Create and add bot message placeholder
-    const botMessage = this.addBotMessagePlaceholder();
-
-    // Clear input and set connecting state
+    this.addBotMessagePlaceholder();
+// Clear input and set connecting state
     this._chatMessage.set('');
     this._isConnecting.set(true);
 
@@ -226,16 +217,16 @@ export class ChatboxComponent {
       // Check if chat model is available
       const metrics = this._metricsInput();
       if (!metrics.chatModel) {
-        this.handleChatError(botMessage, 'No chat model is available');
+        this.handleChatError('No chat model is available');
         return;
       }
 
       // Stream the chat response
-      await this.streamChatResponse(params, botMessage);
+      await this.streamChatResponse(params);
 
     } catch (error) {
       console.error('Chat request error:', error);
-      this.handleChatError(botMessage, 'Sorry, I encountered an error processing your request.');
+      this.handleChatError('Sorry, I encountered an error processing your request.');
     }
   }
 
@@ -310,7 +301,7 @@ export class ChatboxComponent {
     });
   }
 
-  private handleChatError(botMessage: ChatboxMessage, errorMessage: string): void {
+  private handleChatError(errorMessage: string): void {
     this.ngZone.run(() => {
       this.setBotMessageTyping(false);
       if (this.lastBotMessage()?.text === '') {
@@ -365,7 +356,7 @@ export class ChatboxComponent {
   }
 
   private insertResolvedPromptIntoChat(resolvedPrompt: any): void {
-    let content = '';
+    let content: string;
 
     if (resolvedPrompt.messages && resolvedPrompt.messages.length > 0) {
       // Use structured messages
@@ -383,7 +374,7 @@ export class ChatboxComponent {
     this.sendChatMessage();
   }
 
-  private streamChatResponse(params: HttpParams, botMessage: ChatboxMessage): Promise<void> {
+  private streamChatResponse(params: HttpParams): Promise<void> {
     return new Promise((resolve, reject) => {
       const url = `${this.protocol}//${this.host}/chat?${params.toString()}`;
 
@@ -426,7 +417,7 @@ export class ChatboxComponent {
       eventSource.onerror = (error) => {
         console.error('EventSource error:', error);
         eventSource.close();
-        this.handleChatError(botMessage, 'Sorry, I encountered an error processing your request.');
+        this.handleChatError('Sorry, I encountered an error processing your request.');
         reject(error);
       };
 
