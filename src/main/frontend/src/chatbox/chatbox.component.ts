@@ -46,7 +46,6 @@ interface ChatboxMessage {
 export class ChatboxComponent {
   @Input() documentId: string = '';
 
-  // Convert metrics input to signal for reactivity
   @Input() set metrics(value: PlatformMetrics) {
     this._metricsInput.set(value);
   }
@@ -83,7 +82,6 @@ export class ChatboxComponent {
       this._chatMessage().trim().length > 0 &&
       !this._isStreaming() &&
       !this._isConnecting()
-    // Removed chat model check - let users try even without a model
   );
 
   readonly isBusy = computed(() =>
@@ -188,7 +186,6 @@ export class ChatboxComponent {
     });
   }
 
-  // Method to update chat message (for template binding)
   updateChatMessage(message: string): void {
     this._chatMessage.set(message);
   }
@@ -198,12 +195,8 @@ export class ChatboxComponent {
 
     const messageText = this._chatMessage();
 
-    // Add user message to the conversation
     this.addUserMessage(messageText);
-
-    // Create and add bot message placeholder
     this.addBotMessagePlaceholder();
-// Clear input and set connecting state
     this._chatMessage.set('');
     this._isConnecting.set(true);
 
@@ -230,9 +223,6 @@ export class ChatboxComponent {
     }
   }
 
-  /**
-   * Open the prompt selection dialog
-   */
   openPromptSelection(): void {
     if (!this.hasAvailablePrompts()) {
       return;
@@ -321,9 +311,6 @@ export class ChatboxComponent {
     });
   }
 
-  /**
-   * Handle the result from prompt selection dialog
-   */
   private handlePromptSelection(result: PromptSelectionResult): void {
     const promptId = `${result.prompt.serverId}:${result.prompt.name}`;
 
