@@ -28,7 +28,7 @@ public class DocumentService {
     }
 
     public List<DocumentInfo> getDocuments() {
-        return documentList;
+        return new ArrayList<>(documentList); // Return defensive copy
     }
 
     public DocumentInfo storeFile(MultipartFile file, String fileId) {
@@ -38,9 +38,47 @@ public class DocumentService {
                 .orElse("Unknown");
         DocumentInfo documentInfo = new DocumentInfo(fileId, fileName, file.getSize(), Instant.now().toString());
 
-        deleteDocuments();
+        // No longer delete all documents - just add the new one
         documentList.add(documentInfo);
         return documentInfo;
+    }
+
+    /**
+     * Delete a specific document by its ID
+     * @param documentId The ID of the document to delete
+     * @return true if document was found and deleted, false if not found
+     */
+    public boolean deleteDocument(String documentId) {
+        // Validate that document exists
+        Optional<DocumentInfo> existingDocument = documentList.stream()
+                .filter(doc -> doc.id().equals(documentId))
+                .findFirst();
+
+        if (existingDocument.isEmpty()) {
+            return false; // Document not found
+        }
+
+        // Remove from vector store
+        Filter.Expression filterExpression = new Filter.Expression(Filter.ExpressionType.EQ,
+                new Filter.Key(DOCUMENT_ID),
+                new Filter.Value(documentId)
+        );
+        vectorStore.delete(filterExpression);
+
+        // Remove from document list
+        documentList.removeIf(doc -> doc.id().equals(documentId));
+
+        return true;
+    }
+
+    /**
+     * Check if a document exists by its ID
+     * @param documentId The ID of the document to check
+     * @return true if document exists, false otherwise
+     */
+    public boolean documentExists(String documentId) {
+        return documentList.stream()
+                .anyMatch(doc -> doc.id().equals(documentId));
     }
 
     private void writeToVectorStore(MultipartFile file, String fileId) {

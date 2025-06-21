@@ -20,7 +20,7 @@ import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.springframework.ai.chat.memory.ChatMemory.CONVERSATION_ID;
@@ -48,15 +48,26 @@ public class ChatService {
         this.mcpClientFactory = mcpClientFactory;
     }
 
-    public Flux<String> chatStream(String chat, String conversationId, Optional<String> documentId) {
+    /**
+     * Updated method to handle multiple document IDs
+     */
+    public Flux<String> chatStream(String chat, String conversationId, List<String> documentIds) {
         try (Stream<McpSyncClient> mcpSyncClients = createAndInitializeMcpClients()) {
             ToolCallbackProvider[] toolCallbackProviders = mcpSyncClients
                     .map(SyncMcpToolCallbackProvider::new)
                     .toArray(ToolCallbackProvider[]::new);
 
-            logger.info("CHAT STREAM REQUEST: conversationID = {}", conversationId);
-            return buildAndExecuteStreamChatRequest(chat, conversationId, documentId, toolCallbackProviders);
+            logger.info("CHAT STREAM REQUEST: conversationID = {}, documentIds = {}", conversationId, documentIds);
+            return buildAndExecuteStreamChatRequest(chat, conversationId, documentIds, toolCallbackProviders);
         }
+    }
+
+    /**
+     * Legacy method for backward compatibility - converts single documentId to List
+     */
+    public Flux<String> chatStream(String chat, String conversationId, java.util.Optional<String> documentId) {
+        List<String> documentIds = documentId.map(List::of).orElse(List.of());
+        return chatStream(chat, conversationId, documentIds);
     }
 
     private Stream<McpSyncClient> createAndInitializeMcpClients() {
@@ -65,7 +76,7 @@ public class ChatService {
                 .peek(McpSyncClient::initialize);
     }
 
-    private Flux<String> buildAndExecuteStreamChatRequest(String chat, String conversationId, Optional<String> documentId,
+    private Flux<String> buildAndExecuteStreamChatRequest(String chat, String conversationId, List<String> documentIds,
                                                           ToolCallbackProvider[] toolCallbackProviders) {
 
         ChatClient.ChatClientRequestSpec spec = chatClient.
@@ -74,8 +85,8 @@ public class ChatService {
                 system(systemChatPrompt).
                 toolCallbacks(toolCallbackProviders);
 
-        if (documentId.isPresent()) {
-            spec = addDocumentSearchCapabilities(spec, documentId.get());
+        if (documentIds != null && !documentIds.isEmpty()) {
+            spec = addDocumentSearchCapabilities(spec, documentIds);
         }
 
         spec = spec.advisors(a -> a.param(CONVERSATION_ID, conversationId));
@@ -84,16 +95,51 @@ public class ChatService {
                 .filter(Objects::nonNull);
     }
 
+    /**
+     * Updated method to handle multiple document IDs with OR filter expressions
+     */
     private ChatClient.ChatClientRequestSpec addDocumentSearchCapabilities(
             ChatClient.ChatClientRequestSpec spec,
-            String documentId) {
+            List<String> documentIds) {
 
         Advisor questionAnswerAdvisor = new QuestionAnswerAdvisor(this.vectorStore);
 
-        String filterExpression = DocumentService.DOCUMENT_ID + " == '" + documentId + "'";
+        // Build OR filter expression for multiple documents
+        String filterExpression = buildDocumentFilterExpression(documentIds);
+
+        logger.debug("Using document filter expression: {}", filterExpression);
 
         return spec.advisors(questionAnswerAdvisor)
                 .advisors(advisorSpec ->
                         advisorSpec.param(QuestionAnswerAdvisor.FILTER_EXPRESSION, filterExpression));
+    }
+
+    /**
+     * Builds a filter expression for multiple document IDs using OR logic
+     * Format: "documentId == 'doc1' OR documentId == 'doc2' OR documentId == 'doc3'"
+     */
+    private String buildDocumentFilterExpression(List<String> documentIds) {
+        if (documentIds == null || documentIds.isEmpty()) {
+            return "";
+        }
+
+        // Filter out null or empty document IDs
+        List<String> validDocumentIds = documentIds.stream()
+                .filter(id -> id != null && !id.trim().isEmpty())
+                .toList();
+
+        if (validDocumentIds.isEmpty()) {
+            return "";
+        }
+
+        // For single document, use simple equality
+        if (validDocumentIds.size() == 1) {
+            return DocumentService.DOCUMENT_ID + " == '" + validDocumentIds.get(0) + "'";
+        }
+
+        // For multiple documents, use OR expressions
+        return validDocumentIds.stream()
+                .map(docId -> DocumentService.DOCUMENT_ID + " == '" + docId + "'")
+                .collect(Collectors.joining(" OR "));
     }
 }
