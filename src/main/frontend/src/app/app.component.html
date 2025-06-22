@@ -9,7 +9,7 @@
   </app-chat-panel>
   <app-document-panel
     [metrics]="metrics()"
-    (documentSelected)="onDocumentSelected($event)">
+    (documentIdsChanged)="onDocumentIdsChanged($event)">
   </app-document-panel>
   <app-agents-panel
     [metrics]="metrics()">
@@ -20,6 +20,6 @@
 
   <app-chatbox
     [metrics]="metrics()"
-    [documentId]="currentDocumentId()">
+    [documentIds]="currentDocumentIds()">
   </app-chatbox>
 </main>

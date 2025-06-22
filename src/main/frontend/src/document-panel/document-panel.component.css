@@ -157,3 +157,20 @@ mat-sidenav-content {
   padding-bottom: 16px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
+
+.document-item {
+  position: relative;
+}
+
+.delete-button {
+  color: rgba(0, 0, 0, 0.54);
+  transition: color 0.2s ease;
+}
+
+.delete-button:hover {
+  color: #f44336;
+}
+
+.document-item:hover .delete-button {
+  color: rgba(0, 0, 0, 0.87);
+}

@@ -27,8 +27,8 @@ export class DocumentPanelComponent implements AfterViewInit {
 
   @Input() metrics!: PlatformMetrics;
 
-  // Add Output event emitter for document selection
-  @Output() documentSelected = new EventEmitter<string>();
+  // Add Output event emitter for document IDs changes
+  @Output() documentIdsChanged = new EventEmitter<string[]>();
 
   // Add properties for upload progress
   uploadProgress = 0;
@@ -82,7 +82,7 @@ export class DocumentPanelComponent implements AfterViewInit {
     }
     protocol = this.htmlDocument.location.protocol;
 
-    this.httpClient.post<DocumentInfo>(`${protocol}//${host}/upload`, formData, {
+    this.httpClient.post<UploadResponse>(`${protocol}//${host}/upload`, formData, {
       reportProgress: true,
       observe: 'events'
     }).subscribe({
@@ -93,12 +93,18 @@ export class DocumentPanelComponent implements AfterViewInit {
             this.uploadProgress = Math.round(100 * event.loaded / event.total);
           }
         } else if (event.type === HttpEventType.Response) {
-          // Upload complete
+          // Upload complete - use the response which includes all documents
           this.isUploading = false;
           this.snackBar.open('File uploaded successfully', 'Close', {
             duration: 3000
           });
-          this.fetchDocuments();
+          if (event.body?.allDocuments) {
+            this.documents = event.body.allDocuments;
+            const documentIds = this.documents.map(doc => doc.id);
+            this.documentIdsChanged.emit(documentIds);
+          } else {
+            this.fetchDocuments(); // Fallback to refetch
+          }
         }
       },
       error: (error) => {
@@ -127,13 +133,9 @@ export class DocumentPanelComponent implements AfterViewInit {
       .subscribe({
         next: (data) => {
           this.documents = data;
-          // If documents were retrieved, emit the ID of the first document
-          if (this.documents.length > 0) {
-            this.documentSelected.emit(this.documents[0].id);
-          }
-          else {
-            this.documentSelected.emit('');
-          }
+          // Emit all document IDs whenever the document list changes
+          const documentIds = this.documents.map(doc => doc.id);
+          this.documentIdsChanged.emit(documentIds);
         },
         error: (error) => {
           console.error('Error fetching documents:', error);
@@ -158,11 +160,46 @@ export class DocumentPanelComponent implements AfterViewInit {
           this.snackBar.open('All documents deleted', 'Close', {
             duration: 3000
           });
-          this.fetchDocuments();
+          this.documents = [];
+          this.documentIdsChanged.emit([]);
         },
         error: (error) => {
           console.error('Error deleting all documents:', error);
           this.snackBar.open('Error deleting all documents', 'Close', {
+            duration: 3000
+          });
+        }
+      });
+  }
+
+  deleteDocument(documentId: string) {
+    let host: string;
+    let protocol: string;
+
+    if (this.htmlDocument.location.hostname == 'localhost') {
+      host = 'localhost:8080';
+    } else {
+      host = this.htmlDocument.location.host;
+    }
+    protocol = this.htmlDocument.location.protocol;
+
+    this.httpClient.delete<DeleteResponse>(`${protocol}//${host}/documents/${documentId}`)
+      .subscribe({
+        next: (response) => {
+          this.snackBar.open('Document deleted', 'Close', {
+            duration: 3000
+          });
+          if (response?.remainingDocuments) {
+            this.documents = response.remainingDocuments;
+            const documentIds = this.documents.map(doc => doc.id);
+            this.documentIdsChanged.emit(documentIds);
+          } else {
+            this.fetchDocuments(); // Fallback to refetch
+          }
+        },
+        error: (error) => {
+          console.error('Error deleting document:', error);
+          this.snackBar.open('Error deleting document', 'Close', {
             duration: 3000
           });
         }
@@ -175,4 +212,14 @@ interface DocumentInfo {
   name: string;
   size: number;
   uploadDate: string;
+}
+
+interface UploadResponse {
+  uploadedDocument: DocumentInfo;
+  allDocuments: DocumentInfo[];
+}
+
+interface DeleteResponse {
+  message: string;
+  remainingDocuments: DocumentInfo[];
 }
