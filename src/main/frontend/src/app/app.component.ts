@@ -21,7 +21,7 @@ export class AppComponent {
   title = 'pulseui';
 
   // Use signals for reactive state management
-  private readonly _currentDocumentId = signal<string>('');
+  private readonly _currentDocumentIds = signal<string[]>([]);
   private readonly _metrics = signal<PlatformMetrics>({
     conversationId: '',
     chatModel: '',
@@ -37,7 +37,7 @@ export class AppComponent {
   });
 
   // Public readonly signals
-  readonly currentDocumentId = this._currentDocumentId.asReadonly();
+  readonly currentDocumentIds = this._currentDocumentIds.asReadonly();
   readonly metrics = this._metrics.asReadonly();
 
   private readonly destroyRef = inject(DestroyRef);
@@ -49,16 +49,16 @@ export class AppComponent {
 
     // Use effect for side effects based on signal changes
     effect(() => {
-      const documentId = this.currentDocumentId();
-      if (documentId) {
-        console.log('Document selected with ID:', documentId);
+      const documentIds = this.currentDocumentIds();
+      if (documentIds.length > 0) {
+        console.log('Documents selected with IDs:', documentIds);
       }
     });
   }
 
   // Method to handle document selection from DocumentPanelComponent
-  onDocumentSelected(documentId: string): void {
-    this._currentDocumentId.set(documentId);
+  onDocumentIdsChanged(documentIds: string[]): void {
+    this._currentDocumentIds.set([...documentIds]);
   }
 
   // Initialize metrics polling with improved error handling

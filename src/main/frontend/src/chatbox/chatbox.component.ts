@@ -44,7 +44,7 @@ interface ChatboxMessage {
   styleUrl: './chatbox.component.css'
 })
 export class ChatboxComponent {
-  @Input() documentId: string = '';
+  @Input() documentIds: string[] = [];
 
   @Input() set metrics(value: PlatformMetrics) {
     this._metricsInput.set(value);
@@ -202,8 +202,9 @@ export class ChatboxComponent {
 
     // Create HTTP params
     let params: HttpParams = new HttpParams().set('chat', messageText);
-    if (this.documentId.length > 0) {
-      params = params.set('documentId', this.documentId);
+    if (this.documentIds.length > 0) {
+      // Send multiple document IDs as comma-separated string
+      params = params.set('documentIds', this.documentIds.join(','));
     }
 
     try {

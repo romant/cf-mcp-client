@@ -45,17 +45,24 @@
     </div>
 
     <div class="documents-list">
-      <h3>Uploaded Files</h3>
+      <h3>Uploaded Files ({{ documents.length }})</h3>
 
       <div class="empty-state" *ngIf="documents.length === 0">
         No documents uploaded yet
       </div>
 
       <mat-list>
-        <mat-list-item *ngFor="let doc of documents">
+        <mat-list-item *ngFor="let doc of documents" class="document-item">
           <mat-icon matListItemIcon>insert_drive_file</mat-icon>
           <div matListItemTitle>{{ doc.name }}</div>
           <div matListItemLine>{{ doc.size | fileSize }}</div>
+          <button mat-icon-button 
+                  matListItemMeta 
+                  (click)="deleteDocument(doc.id)" 
+                  matTooltip="Delete document"
+                  class="delete-button">
+            <mat-icon>delete</mat-icon>
+          </button>
         </mat-list-item>
       </mat-list>
     </div>
