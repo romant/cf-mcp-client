@@ -5,10 +5,11 @@ import io.pivotal.cfenv.core.CfEnv;
 import io.pivotal.cfenv.core.CfService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -19,59 +20,29 @@ public class GenAIService {
     private static final Logger logger = LoggerFactory.getLogger(GenAIService.class);
 
     // Constants
-    public static final String GENAI = "genai";
-    public static final String MODEL_CAPABILITIES = "model_capabilities";
-    public static final String MODEL_NAME = "model_name";
-    public static final String EMBEDDING_CAPABILITY = "embedding";
-    public static final String CHAT_CAPABILITY = "chat";
     public static final String MCP_SERVICE_URL = "mcpServiceURL";
 
+    public static final String CHAT_MODEL = "spring.ai.openai.chat.options.model";
+    public static final String EMBEDDING_MODEL = "spring.ai.openai.embedding.options.model";
+
+    private final Environment environment;
     private final CfEnv cfEnv;
 
-    public GenAIService() {
+    public GenAIService(Environment environment) {
+        this.environment = environment;
         this.cfEnv = new CfEnv();
     }
 
     public boolean isEmbeddingModelAvailable() {
-        try {
-            return cfEnv.findAllServices().stream()
-                    .filter(service -> service.existsByTagIgnoreCase(GENAI) ||
-                            service.existsByLabelStartsWith(GENAI))
-                    .anyMatch(service -> hasCapability(service, EMBEDDING_CAPABILITY));
-        } catch (Exception e) {
-            logger.warn("Error checking for embedding model availability: {}", e.getMessage());
-            return false;
-        }
+        return environment.getProperty(EMBEDDING_MODEL) != null;
     }
 
     public String getEmbeddingModelName() {
-        try {
-            return cfEnv.findAllServices().stream()
-                    .filter(service -> service.existsByTagIgnoreCase(GENAI) ||
-                            service.existsByLabelStartsWith(GENAI))
-                    .filter(service -> hasCapability(service, EMBEDDING_CAPABILITY))
-                    .findFirst()
-                    .map(this::getModelName)
-                    .orElse("");
-        } catch (Exception e) {
-            logger.warn("Error getting embedding model name: {}", e.getMessage());
-            return "";
-        }
+        return Objects.requireNonNullElse(environment.getProperty(EMBEDDING_MODEL), "");
     }
 
     public String getChatModelName() {
-        try {
-            return cfEnv.findAllServices().stream()
-                    .filter(service -> service.existsByTagIgnoreCase(GENAI) ||
-                            service.existsByLabelStartsWith(GENAI))
-                    .filter(service -> hasCapability(service, CHAT_CAPABILITY))
-                    .findFirst()
-                    .map(this::getModelName)
-                    .orElse("");
-        } catch (Exception e) {
-            logger.warn("Error getting chat model name: {}", e.getMessage());
-            return "";
-        }
+        return Objects.requireNonNullElse(environment.getProperty(CHAT_MODEL), "");
     }
 
     public List<String> getMcpServiceNames() {
@@ -98,21 +69,8 @@ public class GenAIService {
         }
     }
 
-    public boolean hasCapability(CfService service, String capability) {
-        return Optional.ofNullable(service.getCredentials())
-                .map(creds -> creds.getString(MODEL_CAPABILITIES))
-                .filter(capabilities -> capabilities.contains(capability))
-                .isPresent();
-    }
-
     public boolean hasMcpServiceUrl(CfService service) {
         CfCredentials credentials = service.getCredentials();
         return credentials != null && credentials.getString(MCP_SERVICE_URL) != null;
-    }
-
-    public String getModelName(CfService service) {
-        CfCredentials credentials = service.getCredentials();
-        String modelName = credentials != null ? credentials.getString(MODEL_NAME) : null;
-        return modelName != null ? modelName : service.getName();
     }
 }
