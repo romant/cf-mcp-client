@@ -5,8 +5,9 @@
   left: 0;
   right: 0;
   top: 64px; /* Same as toolbar height */
-  padding: 15px;
-  width: 90%;
+  padding: 20px;
+  width: 100%;
+  max-width: 900px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -25,6 +26,7 @@
   margin-bottom: 10px;
   position: relative;
   word-wrap: break-word;
+  border-radius: 12px;
 }
 
 .chat-message.user {
@@ -43,6 +45,8 @@
 
 .chatbox-footer {
   margin-bottom: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #e0e0e0;
 }
 
 .chatbox-footer input {
@@ -84,8 +88,19 @@
   transition: opacity 0.2s ease-in-out;
 }
 
+@media (max-width: 600px) {
+  .chatbox {
+    padding: 16px;
+  }
+
+  .chat-message {
+    max-width: 85%;
+  }
+}
+
 button {
   transition: opacity 0.2s ease-in-out, transform 0.1s ease-in-out;
+  border-radius: 8px;
 }
 
 button:active:not(:disabled) {

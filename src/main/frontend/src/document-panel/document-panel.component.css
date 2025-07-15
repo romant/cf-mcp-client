@@ -7,7 +7,9 @@
   top: 120px;
   right: 16px;
   z-index: 1000;
-  background-color: var(--mat-sys-primary-container);
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
 }
 
 .sidenav-container {
@@ -26,7 +28,7 @@
 /* Enable pointer events on the sidenav itself */
 mat-sidenav {
   pointer-events: auto;
-  width: 350px;
+  width: min(350px, 90vw);
   padding: 16px;
   box-shadow: -3px 0 5px rgba(0, 0, 0, 0.1);
 }
