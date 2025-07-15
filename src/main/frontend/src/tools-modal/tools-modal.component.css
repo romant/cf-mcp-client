@@ -58,6 +58,7 @@
   margin-right: 0; /* Ensure no right margin causing overflow */
   word-wrap: break-word; /* Handle long content */
   overflow-wrap: break-word; /* Modern property for word wrapping */
+  border-radius: 8px;
 }
 
 .tool-name {
